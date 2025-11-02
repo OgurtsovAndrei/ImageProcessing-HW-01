@@ -11,12 +11,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms, datasets
+from torchvision.datasets import STL10
 from torchvision.datasets.vision import VisionDataset
 from torchvision.utils import make_grid
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+
 
 class ImagePathsDataset(Dataset):
     """Simple dataset over (path, label) pairs with a transform applied at fetch time."""
@@ -96,61 +98,96 @@ def _compute_class_weights(y: Sequence[int], num_classes: int) -> Tuple[List[int
     return counts, torch.tensor(weights, dtype=torch.float32)
 
 
+class TransformedSubset(Dataset):
+    """Wrap a torch.utils.data.Subset and apply a transform to the image.
+
+    This lets us keep a single base dataset instance while using different
+    transforms for train/val/test without mutating the base dataset's transform.
+    """
+
+    def __init__(self, subset: Subset, transform: Optional[Callable] = None):
+        self.subset = subset
+        self.transform = transform
+
+    def __len__(self) -> int:
+        return len(self.subset)
+
+    def __getitem__(self, idx: int):
+        image, label = self.subset[idx]
+        if self.transform is not None:
+            image = self.transform(image)
+        return image, label
+
+
+def _extract_labels(dataset: Dataset) -> List[int]:
+    """Best-effort extraction of numeric labels from an arbitrary torchvision dataset.
+
+    Tries (in order):
+      - dataset.targets
+      - dataset.labels
+      - dataset.samples / dataset.imgs (list of (path, label))
+      - iterate over dataset[i][1]
+    """
+    # Common attrs
+    y = getattr(dataset, 'targets', None)
+    if y is None:
+        y = getattr(dataset, 'labels', None)
+    if y is not None:
+        return list(map(int, list(y)))
+
+    # ImageFolder-like
+    samples = getattr(dataset, 'samples', None)
+    if samples is None:
+        samples = getattr(dataset, 'imgs', None)
+    if samples is not None:
+        return [int(lbl) for _, lbl in samples]
+
+    # Fallback: iterate (may be slower but robust)
+    return [int(dataset[i][1]) for i in range(len(dataset))]
+
+
 def setup_dataset_realtime(
-    dataset: VisionDataset,
-    batch_size: int = 32,
-    test_size: float = 0.15,
-    val_size: float = 0.15,
-    random_state: int = 42,
-    augmentation_transform: Optional[Callable] = None,
-    model_transform: Optional[Callable] = None,
-    num_workers: int = 4,
-    pin_memory: bool = True,
-    persistent_workers: bool = True,
+        dataset: VisionDataset,
+        batch_size: int = 32,
+        test_size: float = 0.15,
+        val_size: float = 0.15,
+        random_state: int = 42,
+        augmentation_transform: Optional[Callable] = None,
+        model_transform: Optional[Callable] = None,
+        num_workers: int = 4,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
 ) -> DatasetBundle:
     """
     Create train/val/test datasets and loaders with on-the-fly augmentation, without
     generating or copying files. Class weights are computed from the training split.
 
-    Caller must pass a prebuilt torchvision VisionDataset via `dataset`. It must expose
-    ImageFolder-like attributes (classes, class_to_idx, and either samples or imgs containing
-    (path, label) pairs).
+    Caller must pass a prebuilt torchvision VisionDataset via `dataset`. Works with both
+    ImageFolder-like datasets and array-backed datasets (e.g., STL10, CIFAR10). Splits are
+    created via torch.utils.data.Subset with stratification by labels.
 
     Different models can pass their own transforms via augmentation_transform and model_transform.
     - model_transform is ALWAYS applied to all splits.
     - augmentation_transform is applied ONLY on the training split, BEFORE model_transform.
     """
 
-    # Resolve base dataset (now required)
+    # Base dataset instance
     base: VisionDataset = dataset
 
-    # Extract metadata
+    # Extract labels robustly for stratified split
+    all_labels: List[int] = _extract_labels(base)
+    if len(all_labels) != len(base):
+        raise RuntimeError(
+            "Failed to extract labels for all items: "
+            f"got {len(all_labels)} labels for dataset of length {len(base)}."
+        )
+
+    # If classes are missing but we have class_to_idx, reconstruct the list in index order
     classes_attr = getattr(base, 'classes', None)
     class_to_idx_attr = getattr(base, 'class_to_idx', None)
-
     classes: List[str] = list(classes_attr) if classes_attr is not None else []
     class_to_idx: Dict[str, int] = dict(class_to_idx_attr) if class_to_idx_attr is not None else {}
 
-    # Extract samples: prefer `samples`, fallback to legacy `imgs`
-    samples = getattr(base, 'samples', None)
-    if samples is None:
-        samples = getattr(base, 'imgs', None)
-
-    if samples is None:
-        # We require file-based datasets. Provide a clear error.
-        raise AttributeError(
-            "The provided dataset must expose a 'samples' (or legacy 'imgs') attribute with (path, label) pairs."
-        )
-
-    all_paths_tuple, all_labels_tuple = zip(*samples) if len(samples) > 0 else ([], [])
-    all_paths: List[str] = list(all_paths_tuple)
-    all_labels: List[int] = list(all_labels_tuple)
-
-    if len(all_paths) == 0:
-        where = getattr(base, 'root', '<unknown>')
-        raise RuntimeError(f"No images found in '{where}'. Expected class subfolders with images.")
-
-    # If classes are missing but we have class_to_idx, reconstruct the list in index order
     if not classes and class_to_idx:
         max_idx = max(class_to_idx.values()) if class_to_idx else -1
         tmp_classes: List[Optional[str]] = [None] * (max_idx + 1)
@@ -167,13 +204,14 @@ def setup_dataset_realtime(
 
     num_classes: int = len(classes)
 
-    # Stratified splits
-    X_train_val, X_test, y_train_val, y_test = train_test_split(
-        all_paths, all_labels, test_size=test_size, random_state=random_state, stratify=all_labels
+    # Stratified splits over indices
+    all_indices = list(range(len(base)))
+    idx_train_val, idx_test, y_train_val, y_test = train_test_split(
+        all_indices, all_labels, test_size=test_size, random_state=random_state, stratify=all_labels
     )
     relative_val_size: float = val_size / (1 - test_size)
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_train_val, y_train_val, test_size=relative_val_size, random_state=random_state, stratify=y_train_val
+    idx_train, idx_val, y_train, y_val = train_test_split(
+        idx_train_val, y_train_val, test_size=relative_val_size, random_state=random_state, stratify=y_train_val
     )
 
     # Transforms
@@ -189,10 +227,14 @@ def setup_dataset_realtime(
     # Validation/Test use only the model transform
     eval_tf = model_tf
 
-    # Build datasets
-    train_ds = ImagePathsDataset(list(zip(X_train, y_train)), transform=train_tf)
-    val_ds = ImagePathsDataset(list(zip(X_val, y_val)), transform=eval_tf)
-    test_ds = ImagePathsDataset(list(zip(X_test, y_test)), transform=eval_tf)
+    # Build Subsets with per-split transforms (without mutating base)
+    train_subset = Subset(base, idx_train)
+    val_subset = Subset(base, idx_val)
+    test_subset = Subset(base, idx_test)
+
+    train_ds: Dataset = TransformedSubset(train_subset, transform=train_tf)
+    val_ds: Dataset = TransformedSubset(val_subset, transform=eval_tf)
+    test_ds: Dataset = TransformedSubset(test_subset, transform=eval_tf)
 
     # Class weights from training labels
     class_counts, class_weights = _compute_class_weights(y_train, num_classes)
@@ -211,9 +253,18 @@ def setup_dataset_realtime(
         pin_memory=pin_memory, persistent_workers=persistent_workers
     )
 
-    idx_to_class: List[str] = [None] * num_classes  # type: ignore[assignment]
-    for cls, idx in class_to_idx.items():
-        idx_to_class[idx] = cls
+    # Build idx_to_class consistently
+    if class_to_idx:
+        idx_to_class: List[str] = [None] * num_classes  # type: ignore[assignment]
+        for cls, idx in class_to_idx.items():
+            if idx < len(idx_to_class):
+                idx_to_class[idx] = cls
+        # Fill any gaps with stringified indices
+        for i in range(len(idx_to_class)):
+            if idx_to_class[i] is None:
+                idx_to_class[i] = str(i)
+    else:
+        idx_to_class = list(classes)
 
     print("\nReal-time dataset setup complete:")
     print(f"  Classes: {classes}")
@@ -260,9 +311,21 @@ if __name__ == '__main__':
     BATCH_SIZE: int = 32
 
     try:
-        ds_demo = datasets.ImageFolder(root='data')
+        ds_demo = datasets.ImageFolder(root='data/MacVsNonMac')
+
+        ds_2 = STL10(root='data/STL10', split="train", download=True)
+        classes = ds_2.classes
+        cat_id, dog_id = classes.index("cat"), classes.index("dog")
+
+
+        def keep_idx(ds, keep):
+            return [i for i in range(len(ds)) if ds[i][1] in keep]
+
+
+        ds_2 = keep_idx(ds_2, (cat_id, dog_id))
+
         bundle: DatasetBundle = setup_dataset_realtime(
-            dataset=ds_demo,
+            dataset=ds_2,
             batch_size=BATCH_SIZE,
         )
 
@@ -296,4 +359,3 @@ if __name__ == '__main__':
 
     except Exception as e:
         print(f"\nDataset real-time setup failed: {e}")
-

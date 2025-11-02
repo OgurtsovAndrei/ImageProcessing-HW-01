@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 # PyTorch Lightning + TorchMetrics
 import pytorch_lightning as pl
 from torchmetrics import Accuracy, F1Score
-from torchvision.datasets import STL10
+from torchvision.datasets import STL10, VisionDataset
 
 from src.data.dataset import setup_dataset_realtime, DatasetBundle
 from torchvision import datasets
@@ -232,8 +232,8 @@ LR = 1e-4
 
 if __name__ == '__main__':
 
-    # ds = STL10(root=STP_DATA_ROOT, split="train", download=True)
-    ds = datasets.ImageFolder(root=MAC_DATA_ROOT)
+    ds: VisionDataset = STL10(root=STP_DATA_ROOT, split="train", download=True)
+    # ds = datasets.ImageFolder(root=MAC_DATA_ROOT)
 
     bundle: DatasetBundle = setup_dataset_realtime(
         dataset=ds,
