@@ -18,6 +18,8 @@ matplotlib = "*"
 pyyaml = "*"
 transformers = "*"
 torchao = "*"
+pytorch-lightning = "*"
+torchmetrics = "*"
 
 [dev-packages]
 

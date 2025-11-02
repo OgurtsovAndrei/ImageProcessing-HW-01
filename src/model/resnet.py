@@ -21,7 +21,7 @@ def create_resnet_classifier(
         pretrained: bool = True,
         freeze_backbone: bool = False,
         weights: Optional[object] = None,
-) -> Tuple[nn.Module, Optional[object]]:
+) -> nn.Module:
     used_weights = weights if weights is not None else _get_default_weights(pretrained)
     model = models.resnet50(weights=used_weights)
 
@@ -38,7 +38,7 @@ def create_resnet_classifier(
                 param.requires_grad = True
             else:
                 param.requires_grad = False
-    return model, used_weights
+    return model
 
 
 if __name__ == '__main__':

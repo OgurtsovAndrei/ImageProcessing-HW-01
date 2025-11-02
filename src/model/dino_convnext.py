@@ -29,7 +29,7 @@ class DinoV3SwinClassifier(nn.Module):
 
         return logits
 
-def create_dino_swin_classifier(
+def create_dino_conv_classifier(
         num_classes: int = 1000,
         freeze_backbone: bool = False,
         model_name: str = "facebook/dinov3-convnext-small-pretrain-lvd1689m"
@@ -58,7 +58,7 @@ def load_dinoV3_swin():
 
     num_labels = 2
 
-    model = create_dino_swin_classifier(num_classes=num_labels, model_name=model_name)
+    model = create_dino_conv_classifier(num_classes=num_labels, model_name=model_name)
     model.eval()
 
     inputs = processor(images=image, return_tensors="pt")
