@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from torchmetrics import Accuracy, F1Score
 
-from src.data.dataset import setup_dataset, get_dataloaders
+from src.data.dataset import setup_dataset_realtime, DatasetBundle
 from src.model.resnet import create_resnet_classifier
 from src.save_res import save_and_plot_history
 
@@ -32,12 +32,14 @@ def get_device() -> torch.device:
 class ClassificationLightningModule(pl.LightningModule):
     """LightningModule wrapper around a standard nn.Module classifier."""
 
-    def __init__(self, base_model: nn.Module, num_classes: int, lr: float, weight_decay: float, l1_lambda: float):
+    def __init__(self, base_model: nn.Module, num_classes: int, lr: float, weight_decay: float, l1_lambda: float,
+                 class_weights: Optional[torch.Tensor] = None):
         super().__init__()
         self.model = base_model
         self.save_hyperparameters(ignore=["base_model"])  # logs lr/decays/etc.
 
-        self.criterion = nn.CrossEntropyLoss()
+        # Register criterion with optional class weights (moved with module to device)
+        self.criterion = nn.CrossEntropyLoss(weight=class_weights)
         self.lr = lr
         self.weight_decay = weight_decay
         self.l1_lambda = l1_lambda
@@ -156,7 +158,9 @@ def train_model(
         optimizer: optim.Optimizer,
         device: torch.device,
         num_epochs: int,
-        weights_dir: str
+        weights_dir: str,
+        num_classes: int,
+        class_weights: Optional[torch.Tensor] = None,
 ) -> None:
     # Note: criterion and optimizer params kept for backward compatibility but handled by Lightning.
     os.makedirs(weights_dir, exist_ok=True)
@@ -165,10 +169,11 @@ def train_model(
     # Build Lightning module
     lit_module = ClassificationLightningModule(
         base_model=model,
-        num_classes=NUM_CLASSES,
+        num_classes=num_classes,
         lr=LR,
         weight_decay=L2_LAMBDA,
         l1_lambda=L1_LAMBDA,
+        class_weights=class_weights,
     )
 
     # Callbacks to preserve legacy behavior
@@ -208,35 +213,30 @@ def train_model(
 
 
 SOURCE_DIRS = ['mac-merged', 'laptops-merged']
-PROCESSED_DIR = 'data/processed'
+PROCESSED_DIR = 'data'  # now read directly from source; no offline augmentation
 WEIGHTS_DIR = 'models/weights'
 MODEL_NAME = 'convnext'
 
 NUM_CLASSES = 2
 BATCH_SIZE = 32
 NUM_EPOCHS = 50
-TARGET_AUG_COUNT = 1024
 L1_LAMBDA = 1e-6
 L2_LAMBDA = 1e-5
 LR = 1e-4
 
 if __name__ == '__main__':
-    setup_dataset(
-        source_base_dir='data',
-        processed_base_dir=PROCESSED_DIR,
-        source_class_names=SOURCE_DIRS,
-        target_aug_count=TARGET_AUG_COUNT
-    )
-
-    train_loader, val_loader, test_loader = get_dataloaders(
-        processed_dir=PROCESSED_DIR,
-        batch_size=BATCH_SIZE
+    # Build real-time datasets and loaders (on-the-fly augmentation)
+    bundle: DatasetBundle = setup_dataset_realtime(
+        source_base_dir=PROCESSED_DIR,
+        batch_size=BATCH_SIZE,
     )
 
     device = get_device()
     print(f"Selected device: {device}")
 
-    model = create_resnet_classifier(num_classes=NUM_CLASSES)
+    # Derive actual number of classes from data
+    effective_num_classes = bundle.num_classes
+    model = create_resnet_classifier(num_classes=effective_num_classes)
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -246,11 +246,13 @@ if __name__ == '__main__':
     train_model(
         model=model,
         model_name=MODEL_NAME,
-        train_loader=train_loader,
-        val_loader=val_loader,
+        train_loader=bundle.train_loader,
+        val_loader=bundle.val_loader,
         criterion=criterion,
         optimizer=optimizer,
         device=device,
         num_epochs=NUM_EPOCHS,
-        weights_dir=WEIGHTS_DIR
+        weights_dir=WEIGHTS_DIR,
+        num_classes=effective_num_classes,
+        class_weights=bundle.class_weights,
     )

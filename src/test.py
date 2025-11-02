@@ -12,10 +12,10 @@ from tqdm import tqdm
 from src.model.swin import load_swin_from_weights
 from src.model.vit import load_vit_from_weights
 from src.model.resnet import load_resnet_from_weights
-from src.data.dataset import get_dataloaders
+from src.data.dataset import setup_dataset_realtime, DatasetBundle
 
 WEIGHTS_DIR = 'models/weights'
-PROCESSED_DIR = 'data/processed'
+PROCESSED_DIR = 'data'  # read directly from source; no offline augmentation
 RESULTS_CSV_PATH = 'test_results.csv'
 BATCH_SIZE = 32
 NUM_CLASSES = 2
@@ -104,11 +104,12 @@ def main():
         print("Ensure that the files are in the format 'model-name-DATE_TIME-f1_SCORE.pth'")
         return
 
+    # Build datasets/loaders in real-time mode and use test loader
     try:
-        _, _, test_loader = get_dataloaders(processed_dir=PROCESSED_DIR, batch_size=BATCH_SIZE)
-    except FileNotFoundError:
-        print(f"Error: Data directory '{PROCESSED_DIR}' not found.")
-        print("Please prepare the dataset first by running train.py or dataset.py.")
+        bundle: DatasetBundle = setup_dataset_realtime(source_base_dir=PROCESSED_DIR, batch_size=BATCH_SIZE)
+        test_loader = bundle.test_loader
+    except Exception as e:
+        print(f"Failed to prepare dataset: {e}")
         return
 
     results = []
