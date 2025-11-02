@@ -173,6 +173,12 @@ def setup_dataset_realtime(
 
     # Base dataset instance
     base: VisionDataset = dataset
+    # Defensive check to catch accidental lists/tuples of indices
+    if not isinstance(base, Dataset):
+        raise TypeError(
+            f"setup_dataset_realtime expects a torch.utils.data.Dataset (e.g., a VisionDataset or a Subset), "
+            f"but got {type(base).__name__}. Did you pass a list of indices instead of a Dataset?"
+        )
 
     # Extract labels robustly for stratified split
     all_labels: List[int] = _extract_labels(base)
@@ -183,8 +189,12 @@ def setup_dataset_realtime(
         )
 
     # If classes are missing but we have class_to_idx, reconstruct the list in index order
-    classes_attr = getattr(base, 'classes', None)
-    class_to_idx_attr = getattr(base, 'class_to_idx', None)
+    # Unwrap Subset for metadata so we can read underlying dataset's classes/class_to_idx
+    meta_src = base
+    while isinstance(meta_src, Subset):
+        meta_src = meta_src.dataset  # type: ignore[attr-defined]
+    classes_attr = getattr(meta_src, 'classes', None)
+    class_to_idx_attr = getattr(meta_src, 'class_to_idx', None)
     classes: List[str] = list(classes_attr) if classes_attr is not None else []
     class_to_idx: Dict[str, int] = dict(class_to_idx_attr) if class_to_idx_attr is not None else {}
 
@@ -322,7 +332,9 @@ if __name__ == '__main__':
             return [i for i in range(len(ds)) if ds[i][1] in keep]
 
 
-        ds_2 = keep_idx(ds_2, (cat_id, dog_id))
+        # Keep only cat and dog samples by wrapping the dataset with a Subset of indices
+        idx_keep = keep_idx(ds_2, (cat_id, dog_id))
+        ds_2 = Subset(ds_2, idx_keep)
 
         bundle: DatasetBundle = setup_dataset_realtime(
             dataset=ds_2,
