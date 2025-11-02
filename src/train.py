@@ -13,6 +13,7 @@ import pytorch_lightning as pl
 from torchmetrics import Accuracy, F1Score
 
 from src.data.dataset import setup_dataset_realtime, DatasetBundle
+from torchvision import datasets
 from src.model.resnet import create_resnet_classifier
 from src.save_res import save_and_plot_history
 
@@ -217,15 +218,16 @@ MODEL_NAME = 'resnet'
 
 NUM_CLASSES = 2
 BATCH_SIZE = 32
-NUM_EPOCHS = 50
+NUM_EPOCHS = 5
 L1_LAMBDA = 1e-6
 L2_LAMBDA = 1e-5
 LR = 1e-4
 
 if __name__ == '__main__':
     # Build real-time datasets and loaders (on-the-fly augmentation)
+    ds = datasets.ImageFolder(root=PROCESSED_DIR)
     bundle: DatasetBundle = setup_dataset_realtime(
-        source_base_dir=PROCESSED_DIR,
+        dataset=ds,
         batch_size=BATCH_SIZE,
     )
 

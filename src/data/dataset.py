@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms, datasets
+from torchvision.datasets.vision import VisionDataset
 from torchvision.utils import make_grid
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
@@ -96,7 +97,7 @@ def _compute_class_weights(y: Sequence[int], num_classes: int) -> Tuple[List[int
 
 
 def setup_dataset_realtime(
-    source_base_dir: str = 'data',
+    dataset: VisionDataset,
     batch_size: int = 32,
     test_size: float = 0.15,
     val_size: float = 0.15,
@@ -111,26 +112,60 @@ def setup_dataset_realtime(
     Create train/val/test datasets and loaders with on-the-fly augmentation, without
     generating or copying files. Class weights are computed from the training split.
 
+    Caller must pass a prebuilt torchvision VisionDataset via `dataset`. It must expose
+    ImageFolder-like attributes (classes, class_to_idx, and either samples or imgs containing
+    (path, label) pairs).
+
     Different models can pass their own transforms via augmentation_transform and model_transform.
     - model_transform is ALWAYS applied to all splits.
     - augmentation_transform is applied ONLY on the training split, BEFORE model_transform.
     """
 
-    if not os.path.isdir(source_base_dir):
-        raise FileNotFoundError(f"Source data directory not found: {source_base_dir}")
+    # Resolve base dataset (now required)
+    base: VisionDataset = dataset
 
-    # Use ImageFolder to enumerate (path, class) pairs according to directory names
-    base: datasets.ImageFolder = datasets.ImageFolder(root=source_base_dir)
-    classes: List[str] = list(base.classes)
-    class_to_idx: Dict[str, int] = dict(base.class_to_idx)
-    num_classes: int = len(classes)
+    # Extract metadata
+    classes_attr = getattr(base, 'classes', None)
+    class_to_idx_attr = getattr(base, 'class_to_idx', None)
 
-    all_paths_tuple, all_labels_tuple = zip(*base.samples) if len(base.samples) > 0 else ([], [])
+    classes: List[str] = list(classes_attr) if classes_attr is not None else []
+    class_to_idx: Dict[str, int] = dict(class_to_idx_attr) if class_to_idx_attr is not None else {}
+
+    # Extract samples: prefer `samples`, fallback to legacy `imgs`
+    samples = getattr(base, 'samples', None)
+    if samples is None:
+        samples = getattr(base, 'imgs', None)
+
+    if samples is None:
+        # We require file-based datasets. Provide a clear error.
+        raise AttributeError(
+            "The provided dataset must expose a 'samples' (or legacy 'imgs') attribute with (path, label) pairs."
+        )
+
+    all_paths_tuple, all_labels_tuple = zip(*samples) if len(samples) > 0 else ([], [])
     all_paths: List[str] = list(all_paths_tuple)
     all_labels: List[int] = list(all_labels_tuple)
 
     if len(all_paths) == 0:
-        raise RuntimeError(f"No images found in '{source_base_dir}'. Expected class subfolders with images.")
+        where = getattr(base, 'root', '<unknown>')
+        raise RuntimeError(f"No images found in '{where}'. Expected class subfolders with images.")
+
+    # If classes are missing but we have class_to_idx, reconstruct the list in index order
+    if not classes and class_to_idx:
+        max_idx = max(class_to_idx.values()) if class_to_idx else -1
+        tmp_classes: List[Optional[str]] = [None] * (max_idx + 1)
+        for cls, idx in class_to_idx.items():
+            if idx < len(tmp_classes):
+                tmp_classes[idx] = cls
+        classes = [c if c is not None else str(i) for i, c in enumerate(tmp_classes)]
+
+    # If still missing, derive minimal metadata from labels
+    if not classes:
+        num_classes_derived = max(all_labels) + 1 if all_labels else 0
+        classes = [str(i) for i in range(num_classes_derived)]
+        class_to_idx = {c: i for i, c in enumerate(classes)}
+
+    num_classes: int = len(classes)
 
     # Stratified splits
     X_train_val, X_test, y_train_val, y_test = train_test_split(
@@ -225,8 +260,9 @@ if __name__ == '__main__':
     BATCH_SIZE: int = 32
 
     try:
+        ds_demo = datasets.ImageFolder(root='data')
         bundle: DatasetBundle = setup_dataset_realtime(
-            source_base_dir='data',
+            dataset=ds_demo,
             batch_size=BATCH_SIZE,
         )
 

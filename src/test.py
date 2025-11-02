@@ -13,6 +13,7 @@ from src.model.swin import load_swin_from_weights
 from src.model.vit import load_vit_from_weights
 from src.model.resnet import load_resnet_from_weights
 from src.data.dataset import setup_dataset_realtime, DatasetBundle
+from torchvision import datasets
 
 WEIGHTS_DIR = 'models/weights'
 PROCESSED_DIR = 'data'  # read directly from source; no offline augmentation
@@ -106,7 +107,8 @@ def main():
 
     # Build datasets/loaders in real-time mode and use test loader
     try:
-        bundle: DatasetBundle = setup_dataset_realtime(source_base_dir=PROCESSED_DIR, batch_size=BATCH_SIZE)
+        ds = datasets.ImageFolder(root=PROCESSED_DIR)
+        bundle: DatasetBundle = setup_dataset_realtime(dataset=ds, batch_size=BATCH_SIZE)
         test_loader = bundle.test_loader
     except Exception as e:
         print(f"Failed to prepare dataset: {e}")
