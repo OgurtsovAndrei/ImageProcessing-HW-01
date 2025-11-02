@@ -145,7 +145,6 @@ def imshow(inp, title=None):
         plt.title(title)
     plt.pause(0.001)  # pause a bit so that plots are updated
 
-
 def calculate_class_weights(train_dataset, device):
     print("Calculating class weights for training set...")
 

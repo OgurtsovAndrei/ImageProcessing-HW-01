@@ -211,11 +211,9 @@ def train_model(
         weights_dir=weights_dir
     )
 
-
-SOURCE_DIRS = ['mac-merged', 'laptops-merged']
-PROCESSED_DIR = 'data'  # now read directly from source; no offline augmentation
+PROCESSED_DIR = 'data'
 WEIGHTS_DIR = 'models/weights'
-MODEL_NAME = 'convnext'
+MODEL_NAME = 'resnet'
 
 NUM_CLASSES = 2
 BATCH_SIZE = 32
