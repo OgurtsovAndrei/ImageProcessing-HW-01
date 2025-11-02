@@ -99,15 +99,16 @@ def _compute_class_weights(y: Sequence[int], num_classes: int) -> Tuple[List[int
 
 
 class TransformedSubset(Dataset):
-    """Wrap a torch.utils.data.Subset and apply a transform to the image.
+    """Wrap a torch.utils.data.Subset and apply transforms to image/target.
 
     This lets us keep a single base dataset instance while using different
     transforms for train/val/test without mutating the base dataset's transform.
     """
 
-    def __init__(self, subset: Subset, transform: Optional[Callable] = None):
+    def __init__(self, subset: Subset, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None):
         self.subset = subset
         self.transform = transform
+        self.target_transform = target_transform
 
     def __len__(self) -> int:
         return len(self.subset)
@@ -116,6 +117,8 @@ class TransformedSubset(Dataset):
         image, label = self.subset[idx]
         if self.transform is not None:
             image = self.transform(image)
+        if self.target_transform is not None:
+            label = self.target_transform(label)
         return image, label
 
 
@@ -195,22 +198,29 @@ def setup_dataset_realtime(
         meta_src = meta_src.dataset  # type: ignore[attr-defined]
     classes_attr = getattr(meta_src, 'classes', None)
     class_to_idx_attr = getattr(meta_src, 'class_to_idx', None)
-    classes: List[str] = list(classes_attr) if classes_attr is not None else []
-    class_to_idx: Dict[str, int] = dict(class_to_idx_attr) if class_to_idx_attr is not None else {}
+    orig_classes: List[str] = list(classes_attr) if classes_attr is not None else []
+    orig_class_to_idx: Dict[str, int] = dict(class_to_idx_attr) if class_to_idx_attr is not None else {}
 
-    if not classes and class_to_idx:
-        max_idx = max(class_to_idx.values()) if class_to_idx else -1
+    if not orig_classes and orig_class_to_idx:
+        max_idx = max(orig_class_to_idx.values()) if orig_class_to_idx else -1
         tmp_classes: List[Optional[str]] = [None] * (max_idx + 1)
-        for cls, idx in class_to_idx.items():
+        for cls, idx in orig_class_to_idx.items():
             if idx < len(tmp_classes):
                 tmp_classes[idx] = cls
-        classes = [c if c is not None else str(i) for i, c in enumerate(tmp_classes)]
+        orig_classes = [c if c is not None else str(i) for i, c in enumerate(tmp_classes)]
 
-    # If still missing, derive minimal metadata from labels
-    if not classes:
-        num_classes_derived = max(all_labels) + 1 if all_labels else 0
-        classes = [str(i) for i in range(num_classes_derived)]
-        class_to_idx = {c: i for i, c in enumerate(classes)}
+    # Determine which label ids are actually present in the provided dataset (handles Subset cases)
+    present_label_ids: List[int] = sorted(set(int(y) for y in all_labels))
+    # Map original label ids -> compact [0..K-1]
+    label_map: Dict[int, int] = {orig: new for new, orig in enumerate(present_label_ids)}
+
+    # Build classes for the present labels only
+    if orig_classes:
+        classes: List[str] = [orig_classes[i] if 0 <= i < len(orig_classes) else str(i) for i in present_label_ids]
+    else:
+        # Fallback to stringified original ids
+        classes = [str(i) for i in present_label_ids]
+    class_to_idx: Dict[str, int] = {name: i for i, name in enumerate(classes)}
 
     num_classes: int = len(classes)
 
@@ -237,17 +247,22 @@ def setup_dataset_realtime(
     # Validation/Test use only the model transform
     eval_tf = model_tf
 
-    # Build Subsets with per-split transforms (without mutating base)
+    # Build Subsets with per-split transforms (without mutating base); remap targets to [0..K-1]
     train_subset = Subset(base, idx_train)
     val_subset = Subset(base, idx_val)
     test_subset = Subset(base, idx_test)
 
-    train_ds: Dataset = TransformedSubset(train_subset, transform=train_tf)
-    val_ds: Dataset = TransformedSubset(val_subset, transform=eval_tf)
-    test_ds: Dataset = TransformedSubset(test_subset, transform=eval_tf)
+    # Small, fast callable for mapping labels
+    def _map_label(y: int) -> int:
+        return label_map.get(int(y), int(y))
+
+    train_ds: Dataset = TransformedSubset(train_subset, transform=train_tf, target_transform=_map_label)
+    val_ds: Dataset = TransformedSubset(val_subset, transform=eval_tf, target_transform=_map_label)
+    test_ds: Dataset = TransformedSubset(test_subset, transform=eval_tf, target_transform=_map_label)
 
     # Class weights from training labels
-    class_counts, class_weights = _compute_class_weights(y_train, num_classes)
+    y_train_mapped: List[int] = [label_map[int(y)] for y in y_train]
+    class_counts, class_weights = _compute_class_weights(y_train_mapped, num_classes)
 
     # Loaders
     train_loader = DataLoader(
@@ -263,18 +278,8 @@ def setup_dataset_realtime(
         pin_memory=pin_memory, persistent_workers=persistent_workers
     )
 
-    # Build idx_to_class consistently
-    if class_to_idx:
-        idx_to_class: List[str] = [None] * num_classes  # type: ignore[assignment]
-        for cls, idx in class_to_idx.items():
-            if idx < len(idx_to_class):
-                idx_to_class[idx] = cls
-        # Fill any gaps with stringified indices
-        for i in range(len(idx_to_class)):
-            if idx_to_class[i] is None:
-                idx_to_class[i] = str(i)
-    else:
-        idx_to_class = list(classes)
+    # Build idx_to_class directly from the compact class order
+    idx_to_class: List[str] = list(classes)
 
     print("\nReal-time dataset setup complete:")
     print(f"  Classes: {classes}")
@@ -316,6 +321,19 @@ def _imshow(inp: torch.Tensor, title: Optional[str] = None) -> None:
     plt.pause(0.001)
 
 
+def get_STL_dataset(folder = 'data/STL10'):
+    ds = STL10(root=folder, split="train", download=True)
+    classes = ds.classes
+    cat_id, dog_id = classes.index("cat"), classes.index("dog")
+
+    def keep_idx(ds, keep):
+        return [i for i in range(len(ds)) if ds[i][1] in keep]
+
+    # Keep only cat and dog samples by wrapping the dataset with a Subset of indices
+    idx_keep = keep_idx(ds, (cat_id, dog_id))
+    return Subset(ds, idx_keep)
+
+
 if __name__ == '__main__':
     # Demo entrypoint: use the new real-time pipeline (no offline augmentation or folder copies)
     BATCH_SIZE: int = 32
@@ -323,18 +341,7 @@ if __name__ == '__main__':
     try:
         ds_demo = datasets.ImageFolder(root='data/MacVsNonMac')
 
-        ds_2 = STL10(root='data/STL10', split="train", download=True)
-        classes = ds_2.classes
-        cat_id, dog_id = classes.index("cat"), classes.index("dog")
-
-
-        def keep_idx(ds, keep):
-            return [i for i in range(len(ds)) if ds[i][1] in keep]
-
-
-        # Keep only cat and dog samples by wrapping the dataset with a Subset of indices
-        idx_keep = keep_idx(ds_2, (cat_id, dog_id))
-        ds_2 = Subset(ds_2, idx_keep)
+        ds_2 = get_STL_dataset()
 
         bundle: DatasetBundle = setup_dataset_realtime(
             dataset=ds_2,

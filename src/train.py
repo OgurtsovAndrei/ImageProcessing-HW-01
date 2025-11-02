@@ -15,7 +15,7 @@ import pytorch_lightning as pl
 from torchmetrics import Accuracy, F1Score
 from torchvision.datasets import STL10, VisionDataset
 
-from src.data.dataset import setup_dataset_realtime, DatasetBundle
+from src.data.dataset import setup_dataset_realtime, DatasetBundle, get_STL_dataset
 from torchvision import datasets
 
 from src.model.freeze_utils import FreezeStrategy
@@ -219,7 +219,7 @@ def train_model(
     )
 
 MAC_DATA_ROOT = 'data/MacVsNonMac'
-STP_DATA_ROOT = 'data/STL10'
+STL_DATA_ROOT = 'data/STL10'
 WEIGHTS_DIR = 'models/weights'
 MODEL_NAME = 'resnet'
 
@@ -231,9 +231,9 @@ L2_LAMBDA = 1e-5
 LR = 1e-4
 
 if __name__ == '__main__':
-
-    ds: VisionDataset = STL10(root=STP_DATA_ROOT, split="train", download=True)
     # ds = datasets.ImageFolder(root=MAC_DATA_ROOT)
+    # ds: VisionDataset = STL10(root=STP_DATA_ROOT, split="train", download=True)
+    ds = get_STL_dataset(STL_DATA_ROOT)
 
     bundle: DatasetBundle = setup_dataset_realtime(
         dataset=ds,
