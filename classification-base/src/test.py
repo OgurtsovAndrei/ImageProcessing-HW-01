@@ -13,7 +13,6 @@ from src.model.swin import load_swin_from_weights
 from src.model.vit import load_vit_from_weights
 from src.model.resnet import load_resnet_from_weights
 from src.data.dataset import setup_dataset_realtime, DatasetBundle, get_STL_dataset
-from torchvision import datasets
 
 WEIGHTS_DIR = 'models/weights'
 DATASET_NAME = 'STL10'

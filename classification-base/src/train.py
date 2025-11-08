@@ -6,17 +6,13 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from matplotlib.cbook import STEP_LOOKUP_MAP
-from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
 # PyTorch Lightning + TorchMetrics
 import pytorch_lightning as pl
 from torchmetrics import Accuracy, F1Score
-from torchvision.datasets import STL10, VisionDataset
 
 from src.data.dataset import setup_dataset_realtime, DatasetBundle, get_STL_dataset
-from torchvision import datasets
 
 from src.model.freeze_utils import FreezeStrategy
 from src.model.resnet import create_resnet_classifier

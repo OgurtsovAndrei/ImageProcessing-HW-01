@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from transformers import CLIPModel, CLIPTokenizerFast
-from peft import LoraConfig, get_peft_model
 
 from src.data.dataset import get_STL_dataset, setup_dataset_realtime
 from src.model.clip_finetune import calculate_accuracy
