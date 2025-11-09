@@ -3,8 +3,10 @@ import os
 
 from huggingface_hub import hf_hub_download
 from monai.networks.nets import SwinUNETR
+from networkx.classes import freeze
 from torchinfo import summary
 import segmentation_models_pytorch as smp
+import freeze_utils
 
 
 def adapt_radimagenet_weights(device):
@@ -34,7 +36,7 @@ def adapt_radimagenet_weights(device):
     return weights
 
 
-def create_model(device, num_classes=4, pretrained_weights_path=None):
+def create_model(device, num_classes=4):
     """
     Создает 2D Unet с энкодером InceptionResNetV2, загружает веса RadImageNet
     и адаптирует их для 1-канального входа.
@@ -43,7 +45,7 @@ def create_model(device, num_classes=4, pretrained_weights_path=None):
     print("Creating 2D Unet model with inceptionresnetv2 backbone...")
 
     model = smp.Unet(
-        encoder_name="inceptionresnetv2",  # <--- ИЗМЕНЕНО
+        encoder_name="inceptionresnetv2",
         encoder_weights=None,
         in_channels=1,
         classes=num_classes,
@@ -65,6 +67,9 @@ def create_model(device, num_classes=4, pretrained_weights_path=None):
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = create_model(device, num_classes=4)
+
+    freeze_utils.apply_freeze(model, ("SegmentationHead",), strategy=freeze_utils.FreezeStrategy.PCT70)
+
     print("\nModel created successfully:")
 
     # --- Печать статистики ---
