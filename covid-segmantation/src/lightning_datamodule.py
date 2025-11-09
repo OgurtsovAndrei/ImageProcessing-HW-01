@@ -9,12 +9,12 @@ from dataset import Dataset
 
 
 class CovidDataModule(pl.LightningDataModule):
-    def __init__(self, train_batch_size=24, source_size=512, target_size=256):
+    def __init__(self, batch_size=24, source_size=512, target_size=256):
         super().__init__()
-        self.train_batch_size = train_batch_size
+        self.train_batch_size = batch_size
         self.source_size = source_size
         self.target_size = target_size
-        self.val_batch_size = 1
+        self.val_batch_size = batch_size
         try:
             self.num_workers = os.cpu_count() // 2
         except Exception:
