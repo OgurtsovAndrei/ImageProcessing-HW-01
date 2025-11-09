@@ -36,6 +36,7 @@ pynrrd = "*"
 clearml = "*"
 segmentation-models-pytorch = "*"
 albumentations = "*"
+torchinfo = "*"
 
 [dev-packages]
 
