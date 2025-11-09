@@ -6,9 +6,11 @@ import segmentation_models_pytorch as smp
 import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
 import matplotlib.pyplot as plt
 import cv2
+from monai.networks.nets import SwinUNETR
 from torch import nn
 from torch.utils.data import DataLoader
 import torch
+from model import create_model
 import scipy
 import pandas as pd
 from dataset import Dataset
@@ -201,8 +203,7 @@ if __name__ == '__main__':
     # visualize(torch.unsqueeze(torch.squeeze(train_data[0],1),-1),mask_hot_encoded)
     visualize(train_data[0].permute(0, 2, 3, 1), mask_hot_encoded)
 
-    model = smp.Unet('efficientnet-b2', in_channels=1, encoder_weights='imagenet', classes=4, activation=None,
-                     encoder_depth=5, decoder_channels=[256, 128, 64, 32, 16])
+    model = create_model(device, num_classes=4)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=max_lr, weight_decay=weight_decay)
