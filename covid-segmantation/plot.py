@@ -1,7 +1,9 @@
+from typing import Mapping, Sequence
+
 from matplotlib import pyplot as plt
 
 
-def plot_loss(history):
+def plot_loss(history: Mapping[str, Sequence[float]]) -> None:
     plt.plot(history['val_loss'], label='val', marker='o')
     plt.plot(history['train_loss'], label='train', marker='o')
     plt.title('Loss per epoch');
@@ -11,7 +13,7 @@ def plot_loss(history):
     plt.show()
 
 
-def plot_score(history):
+def plot_score(history: Mapping[str, Sequence[float]]) -> None:
     plt.plot(history['train_miou'], label='train_mIoU', marker='*')
     plt.plot(history['val_miou'], label='val_mIoU', marker='*')
     plt.title('Score per epoch');
@@ -21,7 +23,7 @@ def plot_score(history):
     plt.show()
 
 
-def plot_acc(history):
+def plot_acc(history: Mapping[str, Sequence[float]]) -> None:
     plt.plot(history['train_acc'], label='train_accuracy', marker='*')
     plt.plot(history['val_acc'], label='val_accuracy', marker='*')
     plt.title('Accuracy per epoch')

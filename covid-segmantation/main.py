@@ -1,3 +1,5 @@
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+
 import albumentations
 import numpy as np  # linear algebra
 import segmentation_models_pytorch as smp
@@ -18,8 +20,11 @@ from plot import *
 
 import os
 
+# typed global used in prepare_data
+batch_size: int = 0
 
-def load_data():
+
+def load_data() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     global filename
     for dirname, _, filenames in os.walk('data/covid-segmentation'):
         for filename in filenames:
@@ -43,7 +48,13 @@ def load_data():
     return images_radiopedia, masks_radiopedia, images_medseg, masks_medseg, test_images_medseg
 
 
-def visualize(image_batch, mask_batch=None, pred_batch=None, num_samples=8, hot_encode=True):
+def visualize(
+    image_batch: Union[np.ndarray, torch.Tensor],
+    mask_batch: Optional[Union[np.ndarray, torch.Tensor]] = None,
+    pred_batch: Optional[Union[np.ndarray, torch.Tensor]] = None,
+    num_samples: int = 8,
+    hot_encode: bool = True,
+) -> None:
     num_classes = mask_batch.shape[-1] if mask_batch is not None else 0
     fix, ax = plt.subplots(num_classes + 1, num_samples, figsize=(num_samples * 2, (num_classes + 1) * 2))
 
@@ -72,7 +83,7 @@ def visualize(image_batch, mask_batch=None, pred_batch=None, num_samples=8, hot_
     plt.show()
 
 
-def onehot_to_mask(mask, palette):
+def onehot_to_mask(mask: np.ndarray, palette: Sequence[Sequence[int]]) -> np.ndarray:
     """
     Converts a mask (H, W, K) to (H, W, C)
     """
@@ -82,7 +93,9 @@ def onehot_to_mask(mask, palette):
     return x
 
 
-def preprocess_images(images_arr, mean_std=None):
+def preprocess_images(
+    images_arr: np.ndarray, mean_std: Optional[Tuple[float, float]] = None
+) -> Tuple[np.ndarray, Tuple[float, float]]:
     images_arr[images_arr > 500] = 500
     images_arr[images_arr < -1500] = -1500
     min_perc, max_perc = np.percentile(images_arr, 5), np.percentile(images_arr, 95)
@@ -93,14 +106,14 @@ def preprocess_images(images_arr, mean_std=None):
     return images_arr, (mean, std)
 
 
-def plot_hists(images1, images2=None):
+def plot_hists(images1: np.ndarray, images2: Optional[np.ndarray] = None) -> None:
     plt.hist(images1.ravel(), bins=100, density=True, color='b', alpha=1 if images2 is None else 0.5)
     if images2 is not None:
         plt.hist(images2.ravel(), bins=100, density=True, alpha=0.5, color='orange')
     plt.show()
 
 
-def prepare_data():
+def prepare_data() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     global batch_size
     images_radiopedia, masks_radiopedia, images_medseg, masks_medseg, test_images_medseg = load_data()
     visualize(images_radiopedia[30:], masks_radiopedia[30:])
@@ -137,7 +150,7 @@ def prepare_data():
     return train_images, train_masks, val_images, val_masks, test_images_medseg
 
 
-def mask_to_onehot(mask, palette):
+def mask_to_onehot(mask: np.ndarray, palette: Sequence[Sequence[int]]) -> torch.Tensor:
     """
     Converts a segmentation mask (H, W, C) to (H, W, K) where the last dim is a one
     hot encoding vector, C is usually 1 or 3, and K is the number of class.
@@ -153,11 +166,11 @@ def mask_to_onehot(mask, palette):
     return torch.from_numpy(semantic_map)
 
 
-SOURCE_SIZE = 512
-TARGET_SIZE = 256
-max_lr = 1e-3
-epoch = 20
-weight_decay = 1e-4
+SOURCE_SIZE: int = 512
+TARGET_SIZE: int = 256
+max_lr: float = 1e-3
+epoch: int = 20
+weight_decay: float = 1e-4
 
 if __name__ == '__main__':
     train_images, train_masks, val_images, val_masks, test_images_medseg = prepare_data()

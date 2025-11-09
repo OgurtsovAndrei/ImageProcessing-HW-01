@@ -1,51 +1,47 @@
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+
 import numpy as np
 from PIL import Image
-import segmentation_models_pytorch as smp
-import torch.nn.functional as F
-import torch.nn as nn
-from tqdm.notebook import tqdm
-import time
-
 from torchvision import transforms as T
-from torch.utils.data import Dataset, DataLoader
 import torch
+
 
 class Dataset:
     def __init__(
-            self,
-            images,
-            masks,
-            augmentations=None
-    ):
-        self.images = images
-        self.masks = masks
-        self.augmentations = augmentations
-        self.mean = [0.485]
-        self.std = [0.229]
+        self,
+        images: np.ndarray,
+        masks: np.ndarray,
+        augmentations: Optional[Callable[..., Dict[str, Any]]] = None,
+    ) -> None:
+        self.images: np.ndarray = images
+        self.masks: np.ndarray = masks
+        self.augmentations: Optional[Callable[..., Dict[str, Any]]] = augmentations
+        # single-channel normalization stats
+        self.mean: List[float] = [0.485]
+        self.std: List[float] = [0.229]
 
-    def __getitem__(self, i):
-        image = self.images[i]
-        mask = self.masks[i]
+    def __getitem__(self, i: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        image: np.ndarray = self.images[i]
+        mask: np.ndarray = self.masks[i]
 
         if self.augmentations is not None:
-            sample = self.augmentations(image=image, mask=mask)
-
-            image, mask = Image.fromarray(np.squeeze(sample['image'], axis=2)), sample['mask']
-
-        if self.augmentations is None:
-            image = Image.fromarray(image)
+            sample: Dict[str, Any] = self.augmentations(image=image, mask=mask)
+            image = np.squeeze(sample["image"], axis=2)
+            mask = sample["mask"]
+            pil_image = Image.fromarray(image)
+        else:
+            pil_image = Image.fromarray(image)
 
         t = T.Compose([T.ToTensor(), T.Normalize(self.mean, self.std)])
-        image = t(image)
-        mask = torch.from_numpy(mask).long()
+        image_t: torch.Tensor = t(pil_image)
+        mask_t: torch.Tensor = torch.from_numpy(mask).long()
 
-        return image, mask
+        return image_t, mask_t
 
-    def __len__(self):
-        return len(self.images)
+    def __len__(self) -> int:  # pragma: no cover - trivial
+        return int(len(self.images))
 
-    def tiles(self, image, mask):
-
+    def tiles(self, image: torch.Tensor, mask: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         img_patches = image.unfold(1, 512, 512).unfold(2, 768, 768)
         img_patches = img_patches.contiguous().view(3, -1, 512, 768)
         img_patches = img_patches.permute(1, 0, 2, 3)
