@@ -115,8 +115,10 @@ def prepare_data() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.n
     plot_hists(images_medseg, images_radiopedia)
 
     val_indexes, train_indexes = list(range(24)), list(range(24, 100))
-    train_images = np.concatenate((images_medseg[train_indexes], images_radiopedia))
-    train_masks = np.concatenate((masks_medseg_recover[train_indexes], masks_radiopedia_recover))
+    # train_images = np.concatenate((images_medseg[train_indexes], images_radiopedia))
+    # train_masks = np.concatenate((masks_medseg_recover[train_indexes], masks_radiopedia_recover))
+    train_images = images_medseg[train_indexes]
+    train_masks = masks_medseg_recover[train_indexes]
     val_images = images_medseg[val_indexes]
     val_masks = masks_medseg_recover[val_indexes]
 
