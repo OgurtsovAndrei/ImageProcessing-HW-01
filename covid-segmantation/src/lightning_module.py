@@ -42,6 +42,29 @@ def adapt_radimagenet_weights(device):
     return new_state_dict
 
 
+def create_unet_with_densenet121(num_classes: int,
+                                 freeze_strategy: FreezeStrategy = FreezeStrategy.PCT70,
+                                 device: torch.device = torch.device("cpu")):
+    print("Creating 2D Unet model with densenet121 backbone...")
+    model = smp.Unet(
+        encoder_name="densenet121",
+        encoder_weights=None,
+        in_channels=1,
+        classes=num_classes,
+    )
+
+    adapted_weights = adapt_radimagenet_weights(device)
+    model.encoder.load_state_dict(adapted_weights)
+    print("Successfully loaded RadImageNet weights into 1-channel encoder.")
+
+    if freeze_strategy != FreezeStrategy.NO:
+        print(f"Applying freeze strategy: {freeze_strategy.name}")
+        classifier_prefixes = ('decoder.', 'segmentation_head.')
+        apply_freeze(model, classifier_prefixes, strategy=freeze_strategy)
+
+    return model
+
+
 class CovidSegmenter(pl.LightningModule):
     def __init__(self, num_classes=4, max_lr=1e-3, weight_decay=1e-4,
                  freeze_strategy: FreezeStrategy = FreezeStrategy.PCT70):
@@ -49,23 +72,8 @@ class CovidSegmenter(pl.LightningModule):
         self.save_hyperparameters()
         self.hparams.l1_lambda = 1e-5
 
-        print("Creating 2D Unet model with densenet121 backbone...")
-        self.model = smp.Unet(
-            encoder_name="densenet121",
-            encoder_weights=None,
-            in_channels=1,
-            classes=num_classes,
-        )
-
-
-        adapted_weights = adapt_radimagenet_weights(self.device)
-        self.model.encoder.load_state_dict(adapted_weights)
-        print("Successfully loaded RadImageNet weights into 1-channel encoder.")
-
-        if self.hparams.freeze_strategy != FreezeStrategy.NO:
-            print(f"Applying freeze strategy: {self.hparams.freeze_strategy.name}")
-            classifier_prefixes = ('decoder.', 'segmentation_head.')
-            apply_freeze(self.model, classifier_prefixes, strategy=self.hparams.freeze_strategy)
+        self.model = create_unet_with_densenet121(num_classes, freeze_strategy, self.device)
+        self.model.to(self.device)
 
         self.criterion = nn.CrossEntropyLoss()
 
@@ -148,25 +156,20 @@ if __name__ == '__main__':
 
     print("\n--- Attempting to initialize CovidSegmenter ---")
 
-    try:
-        model = CovidSegmenter(
-            num_classes=4,
-            max_lr=1e-3,
-            weight_decay=1e-4,
-            freeze_strategy=FreezeStrategy.PCT70
-        )
 
-        print("\n--- Model initialization successful ---")
+    model = CovidSegmenter(
+        num_classes=4,
+        max_lr=1e-3,
+        weight_decay=1e-4,
+        freeze_strategy=FreezeStrategy.PCT70
+    )
 
-        print("\n--- Model Summary (Checking freeze status) ---")
-        summary(
-            model,
-            input_size=(1, 1, 256, 256),
-            device=device_str,
-            col_names=["output_size", "num_params", "trainable"]
-        )
+    print("\n--- Model initialization successful ---")
 
-    except Exception as e:
-        print(f"\n--- ERROR during model initialization ---")
-        print(e)
-        print("Model check failed.")
+    print("\n--- Model Summary (Checking freeze status) ---")
+    summary(
+        model,
+        input_size=(1, 1, 256, 256),
+        device=device_str,
+        col_names=["output_size", "num_params", "trainable"]
+    )
