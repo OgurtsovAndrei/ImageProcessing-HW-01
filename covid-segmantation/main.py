@@ -19,7 +19,7 @@ from plot import plot_loss, plot_score, plot_acc, generate_plots_from_logs
 from test import run_test_predictions
 
 SOURCE_SIZE: int = 512
-TARGET_SIZE: int = 256
+TARGET_SIZE: int = SOURCE_SIZE
 MAX_LR: float = 1e-4
 EPOCHS: int = 100
 WEIGHT_DECAY: float = 1e-5
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         num_classes=4,
         max_lr=MAX_LR,
         weight_decay=WEIGHT_DECAY,
-        freeze_strategy=FreezeStrategy.PCT70,
+        freeze_strategy=FreezeStrategy.NO,
         l1_lambda=L1_REG,
     )
 

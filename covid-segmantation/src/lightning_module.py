@@ -141,6 +141,34 @@ def create_unet_with_resnet(num_classes: int,
 
     return model
 
+def create_fpn_with_resnet(num_classes: int,
+                            freeze_strategy: FreezeStrategy = FreezeStrategy.PCT70,
+                            device: torch.device = torch.device("cpu")):
+    print("Creating 2D Unet model with resnet50 backbone...")
+    model = smp.FPN(
+        encoder_name="resnet50",
+        encoder_weights=None,
+        in_channels=1,
+        classes=num_classes,
+    )
+
+    adapted_weights = adapt_radimagenet_weights_resnet(device)
+    try:
+        model.encoder.load_state_dict(adapted_weights)
+        print("Successfully loaded RadImageNet weights into 1-channel ResNet-50 encoder.")
+    except Exception as e:
+        print("\n--- ERROR loading state_dict into ResNet-50 encoder ---")
+        print("This often happens if the keys don't match.")
+        print(e)
+        raise e
+
+    if freeze_strategy != FreezeStrategy.NO:
+        print(f"Applying freeze strategy: {freeze_strategy.name}")
+        classifier_prefixes = ('decoder.', 'segmentation_head.')
+        apply_freeze(model, classifier_prefixes, strategy=freeze_strategy)
+
+    return model
+
 
 def create_swin_model(num_classes: int,
                       freeze_strategy: FreezeStrategy = FreezeStrategy.PCT70,
@@ -278,7 +306,7 @@ if __name__ == '__main__':
         num_classes=4,
         max_lr=1e-3,
         weight_decay=1e-4,
-        freeze_strategy=FreezeStrategy.PCT70
+        freeze_strategy=FreezeStrategy.NO
     )
 
     print("\n--- Model initialization successful ---")
@@ -286,7 +314,7 @@ if __name__ == '__main__':
     print("\n--- Model Summary (Checking freeze status) ---")
     summary(
         model,
-        input_size=(1, 1, 256, 256),
+        input_size=(1, 1, 512, 512),
         device=device_str,
         col_names=["output_size", "num_params", "trainable"]
     )
