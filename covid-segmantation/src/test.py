@@ -6,9 +6,11 @@ import pandas as pd
 import scipy
 import scipy.ndimage
 import torch
+import torch.nn.functional as F
 from torch import nn
 from torchvision import transforms as T
 import albumentations  # TTA: Импортируем albumentations
+import torchmetrics
 
 from data import visualize
 from lightning_module import CovidSegmenter
@@ -123,3 +125,83 @@ def run_test_predictions(checkpoint_callback, datamodule, device, target_size, m
         log_filename = f"submission_miou_{miou_val:.4f}_TTA.csv"
         frame.to_csv(log_filename, index=False)
         print(f"Submission file also saved to {log_filename}")
+
+
+def run_val_tta_evaluation(
+    checkpoint_callback,
+    datamodule,
+    device: torch.device,
+    num_classes: int = 4,
+    visualize_samples: int = 8,
+):
+    """
+    Run horizontal flip TTA on the validation set and report mIoU.
+
+    This mirrors the TTA strategy used in run_test_predictions but operates on
+    the validation dataloader (tensor batches), so no albumentations are applied here.
+    """
+    print("\nRunning TTA evaluation on validation set...")
+
+    best_model_path = checkpoint_callback.best_model_path
+    if not best_model_path or not os.path.exists(best_model_path):
+        print("No best model checkpoint found. Skipping TTA validation evaluation.")
+        return None
+
+    print(f"Loading best model from: {best_model_path}")
+    model = CovidSegmenter.load_from_checkpoint(best_model_path)
+    model.to(device)
+    model.eval()
+
+    # Ensure datamodule is set up and get validation loader
+    datamodule.setup('fit')
+    val_loader = datamodule.val_dataloader()
+
+    # Use the same metric definition as in CovidSegmenter (macro mIoU)
+    miou_metric = torchmetrics.JaccardIndex(task="multiclass", num_classes=num_classes, average='macro').to(device)
+
+    first_batch_images = None
+    first_batch_masks = None
+    first_batch_probs = None
+
+    with torch.no_grad():
+        for images, masks in val_loader:
+            images = images.to(device)
+            masks = masks.to(device)
+
+            # Original
+            logits = model(images)
+            probs = torch.softmax(logits, dim=1)
+
+            # Flipped
+            images_flipped = torch.flip(images, dims=[3])  # flip width dimension
+            logits_flip = model(images_flipped)
+            probs_flip = torch.softmax(logits_flip, dim=1)
+            probs_flip_restored = torch.flip(probs_flip, dims=[3])
+
+            # Average probs
+            probs_avg = (probs + probs_flip_restored) / 2.0
+            preds = torch.argmax(probs_avg, dim=1)
+
+            miou_metric.update(preds, masks)
+
+            # Keep first batch for visualization
+            if first_batch_images is None:
+                first_batch_images = images.detach().cpu()
+                first_batch_masks = masks.detach().cpu()
+                first_batch_probs = probs_avg.detach().cpu()
+
+    tta_miou = miou_metric.compute().item()
+    print(f"[Val TTA] mIoU (macro) = {tta_miou:.4f}")
+
+    # Optional visualization for the first batch
+    if first_batch_images is not None and visualize_samples > 0:
+        try:
+            b = min(visualize_samples, first_batch_images.shape[0])
+            imgs_np = first_batch_images[:b].permute(0, 2, 3, 1).numpy()  # [B,H,W,1]
+            probs_np = first_batch_probs[:b].permute(0, 2, 3, 1).numpy()  # [B,H,W,C]
+            masks_oh = F.one_hot(first_batch_masks[:b].long(), num_classes=num_classes).numpy().astype(np.float32)
+            visualize(imgs_np, masks_oh, probs_np, num_samples=b)
+        except Exception as viz_err:
+            print(f"[Val TTA] Visualization failed: {viz_err}")
+
+    return tta_miou

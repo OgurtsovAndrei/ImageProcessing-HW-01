@@ -16,7 +16,7 @@ from freeze_utils import FreezeStrategy
 from lightning_datamodule import CovidDataModule
 from lightning_module import CovidSegmenter
 from plot import plot_loss, plot_score, plot_acc, generate_plots_from_logs
-from test import run_test_predictions
+from test import run_test_predictions, run_val_tta_evaluation
 
 SOURCE_SIZE: int = 512
 TARGET_SIZE: int = SOURCE_SIZE
@@ -115,5 +115,13 @@ if __name__ == '__main__':
         generate_plots_from_logs(log_dir)
     else:
         print("Could not find log directory, skipping plot generation.")
+
+    # Run TTA on validation set and show its result for comparison with last-epoch val metrics
+    try:
+        tta_val_miou = run_val_tta_evaluation(checkpoint_callback, datamodule, device, num_classes=4, visualize_samples=8)
+        if tta_val_miou is not None:
+            print(f"Validation TTA mIoU (macro): {tta_val_miou:.4f}")
+    except Exception as e:
+        print(f"TTA validation evaluation failed: {e}")
 
     run_test_predictions(checkpoint_callback, datamodule, device, TARGET_SIZE, checkpoint_callback.best_model_score.item())
