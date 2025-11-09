@@ -109,7 +109,7 @@ def run_test_predictions(checkpoint_callback, datamodule, device, target_size):
     visualize(image_batch, test_masks_prediction, num_samples=len(test_images))
 
     print("Resizing test predictions to original size...")
-    test_masks_prediction_original_size = scipy.ndimage.zoom(test_masks_prediction, (1, 2, 2, 1), order=0)
+    test_masks_prediction_original_size = scipy.ndimage.zoom(test_masks_prediction[..., :-2], (1, 2, 2, 1), order=0)
     print(f"Resized predictions shape: {test_masks_prediction_original_size.shape}")
 
     print("Creating submission file (sub.csv)...")
