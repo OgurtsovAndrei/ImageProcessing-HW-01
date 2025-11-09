@@ -57,14 +57,10 @@ class CovidSegmenter(pl.LightningModule):
             classes=num_classes,
         )
 
-        try:
-            adapted_weights = adapt_radimagenet_weights(self.device)
-            self.model.encoder.load_state_dict(adapted_weights)
-            print("Successfully loaded RadImageNet weights into 1-channel encoder.")
 
-        except Exception as e:
-            print(f"Error loading RadImageNet weights: {e}")
-            print("Proceeding with randomly initialized weights.")
+        adapted_weights = adapt_radimagenet_weights(self.device)
+        self.model.encoder.load_state_dict(adapted_weights)
+        print("Successfully loaded RadImageNet weights into 1-channel encoder.")
 
         if self.hparams.freeze_strategy != FreezeStrategy.NO:
             print(f"Applying freeze strategy: {self.hparams.freeze_strategy.name}")
