@@ -165,7 +165,7 @@ def create_efficientnet_model(num_classes: int,
                       _device: torch.device = torch.device("cpu")):
     print("Creating 2D Unet model with efficientnet backbone...")
 
-    model = smp.Unet(
+    model = smp.UnetPlusPlus(
         encoder_name="efficientnet-b7",
         encoder_weights="imagenet",
         in_channels=1,
