@@ -14,6 +14,8 @@ import torchmetrics
 
 from data import visualize
 from lightning_module import CovidSegmenter
+from lightning_datamodule import CovidDataModule
+from types import SimpleNamespace
 
 
 def predict_batch(model: nn.Module, image_batch_t: torch.Tensor) -> torch.Tensor:
@@ -37,7 +39,9 @@ def run_test_predictions(checkpoint_callback, datamodule, device, target_size, m
         return
 
     print(f"Loading best model from: {best_model_path}")
-    best_model = CovidSegmenter.load_from_checkpoint(best_model_path)
+    # strict=False — чтобы игнорировать несовпадающие ключи вроде 'criterion.weight' из чекпоинта
+    best_model = CovidSegmenter.load_from_checkpoint(best_model_path, strict=False)
+    print("Checkpoint loaded with strict=False (extra/missing keys are ignored if any).")
     best_model.to(device)
     best_model.eval()
 
@@ -148,7 +152,9 @@ def run_val_tta_evaluation(
         return None
 
     print(f"Loading best model from: {best_model_path}")
-    model = CovidSegmenter.load_from_checkpoint(best_model_path)
+    # strict=False — игнорируем, например, сохранённый вес функции потерь 'criterion.weight'
+    model = CovidSegmenter.load_from_checkpoint(best_model_path, strict=False)
+    print("Checkpoint loaded with strict=False (extra/missing keys are ignored if any).")
     model.to(device)
     model.eval()
 
@@ -205,3 +211,56 @@ def run_val_tta_evaluation(
             print(f"[Val TTA] Visualization failed: {viz_err}")
 
     return tta_miou
+
+
+def _pick_accelerator() -> str:
+    if torch.backends.mps.is_available():
+        return "mps"
+    if torch.cuda.is_available():
+        return "gpu"
+    return "cpu"
+
+
+CKPT_PATH: str = "checkpoints/best_model-epoch=69-val_miou=0.636.ckpt"  # путь к чекпоинту; если файла нет — будет ошибка
+TEST_BATCH_SIZE: int = 16
+SOURCE_SIZE: int = 512
+TARGET_SIZE: int = 512
+USE_RADIOPEDIA: bool = False  # для консистентности аугментаций; на тест не влияет
+
+
+def main():
+    ckpt_path = CKPT_PATH
+    if not os.path.exists(ckpt_path):
+        print(f"[ОШИБКА] Чекпоинт не найден: {ckpt_path}")
+        print("Укажите корректный путь в переменной CKPT_PATH в начале файла src/test.py")
+        return
+
+    torch.set_float32_matmul_precision('high')
+    accelerator = _pick_accelerator()
+    device = torch.device("mps" if accelerator == "mps" else ("cuda" if accelerator == "gpu" else "cpu"))
+    print(f"Устройство: {device} ({accelerator})")
+
+    # Собираем датамодуль (test_images берутся из prepare_data внутри)
+    datamodule = CovidDataModule(
+        batch_size=TEST_BATCH_SIZE,
+        source_size=SOURCE_SIZE,
+        target_size=TARGET_SIZE,
+        use_radiopedia=USE_RADIOPEDIA,
+    )
+
+    # Оборачиваем путь в объект с полем best_model_path, как ожидает run_test_predictions
+    checkpoint_callback_like = SimpleNamespace(best_model_path=ckpt_path)
+
+    print("Запускаем инференс на тестовом наборе с TTA (горизонтальный флип)...")
+    # miou_val здесь неизвестен — передаём None, чтобы сохранить только sub.csv
+    run_test_predictions(
+        checkpoint_callback_like,
+        datamodule,
+        device,
+        TARGET_SIZE,
+        miou_val=None,
+    )
+
+
+if __name__ == "__main__":
+    main()

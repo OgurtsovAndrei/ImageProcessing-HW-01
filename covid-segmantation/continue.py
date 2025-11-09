@@ -1,6 +1,5 @@
 import os
 import glob
-import argparse
 
 import torch
 import pytorch_lightning as pl
@@ -46,55 +45,37 @@ def pick_accelerator() -> str:
     if torch.backends.mps.is_available():
         return "mps"
     if torch.cuda.is_available():
-        return "gpu"
+        return "cuda"
     return "cpu"
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Продолжение обучения из чекпоинта с тем же пайплайном графиков/TTA/сабмита, как в main.py"
-    )
-    parser.add_argument("--ckpt", type=str, default="",
-                        help="Путь к .ckpt. Если не указан, возьмём самый свежий из папки checkpoints/")
-    parser.add_argument("--add-epochs", type=int, default=20,
-                        help="Сколько ЭПОХ добавить к сохранённому состоянию (max_epochs = saved_epoch + add_epochs)")
-    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
-    parser.add_argument("--source-size", type=int, default=SOURCE_SIZE)
-    parser.add_argument("--target-size", type=int, default=TARGET_SIZE)
-    parser.add_argument("--use-radiopedia", action="store_true",
-                        help="Если передать этот флаг — продолжать на полном датасете (radiopedia + medseg). По умолчанию — только medseg")
-
-    args = parser.parse_args()
-
     torch.set_float32_matmul_precision('high')
 
     accelerator = pick_accelerator()
     device = torch.device("mps" if accelerator == "mps" else ("cuda" if accelerator == "gpu" else "cpu"))
     print(f"Активатор: {accelerator}. Устройство: {device}.")
 
-    # 1) Определим чекпоинт
-    ckpt_path = args.ckpt.strip()
+    ckpt_path = CKPT_PATH.strip()
     if not ckpt_path:
         ckpt_path = find_latest_checkpoint("checkpoints")
         if ckpt_path:
             print(f"Не указан --ckpt, возьмём последний чекпоинт: {ckpt_path}")
     if not ckpt_path or not os.path.exists(ckpt_path):
-        print("[ОШИБКА] Чекпоинт не найден. Укажите --ckpt или поместите .ckpt в папку 'checkpoints/'.")
+        print("[ОШИБКА] Чекпоинт не найден. Укажите путь в CKPT_PATH или поместите .ckpt в папку 'checkpoints/'.")
         return
 
     saved_epoch = read_epoch_from_ckpt(ckpt_path)
-    max_epochs = saved_epoch + int(args.add_epochs)
-    print(f"Продолжаем с эпохи {saved_epoch} ещё на {args.add_epochs} эпох (max_epochs={max_epochs}).")
+    max_epochs = saved_epoch + int(ADD_EPOCHS)
+    print(f"Продолжаем с эпохи {saved_epoch} ещё на {ADD_EPOCHS} эпох (max_epochs={max_epochs}).")
 
-    # 2) Датамодуль — логика как в main.py
     datamodule = CovidDataModule(
-        batch_size=args.batch_size,
-        source_size=args.source_size,
-        target_size=args.target_size,
-        use_radiopedia=bool(args.use_radiopedia)
+        batch_size=BATCH_SIZE,
+        source_size=SOURCE_SIZE,
+        target_size=TARGET_SIZE,
+        use_radiopedia=USE_RADIOPEDIA
     )
 
-    # 3) Модель (инициализируем как в main.py; состояние подтянется из ckpt через trainer.fit(..., ckpt_path=...))
     model = CovidSegmenter(
         num_classes=4,
         max_lr=MAX_LR,
@@ -150,7 +131,11 @@ def main():
     # Сабмит с TTA на тесте
     best_score = checkpoint_callback.best_model_score
     miou_for_name = best_score.item() if best_score is not None else None
-    run_test_predictions(checkpoint_callback, datamodule, device, args.target_size, miou_for_name)
+    run_test_predictions(checkpoint_callback, datamodule, device, TARGET_SIZE, miou_for_name)
+
+CKPT_PATH: str = "checkpoints/best_model-epoch=69-val_miou=0.636.ckpt"  # путь к .ckpt; если пусто — возьмём самый свежий из папки checkpoints/
+ADD_EPOCHS: int = 100
+USE_RADIOPEDIA: bool = False
 
 
 if __name__ == '__main__':
