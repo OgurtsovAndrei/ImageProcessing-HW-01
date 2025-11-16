@@ -48,18 +48,19 @@ class CovidDataModule(pl.LightningDataModule):
             # ),
             albumentations.HorizontalFlip(p=0.5),
             albumentations.RandomBrightnessContrast(p=0.5),
+            A.GaussNoise(p=0.5),
 
-            A.OneOf([
-                A.GaussNoise(p=0.5),
-                A.CoarseDropout(
-                    num_holes_range=(1, 8),
-                    hole_height_range=(int(self.target_size * 0.05), int(self.target_size * 0.1)),
-                    hole_width_range=(int(self.target_size * 0.05), int(self.target_size * 0.1)),
-                    fill=0,
-                    fill_mask=0,
-                    p=0.5
-                )
-            ], 0.9),
+            # A.OneOf([
+            #     A.GaussNoise(p=0.5),
+            #     A.CoarseDropout(
+            #         num_holes_range=(1, 8),
+            #         hole_height_range=(int(self.target_size * 0.05), int(self.target_size * 0.1)),
+            #         hole_width_range=(int(self.target_size * 0.05), int(self.target_size * 0.1)),
+            #         fill=0,
+            #         fill_mask=0,
+            #         p=0.5
+            #     )
+            # ], 0.9),
         ])
 
         self.val_augs = albumentations.Compose([

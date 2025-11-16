@@ -206,6 +206,116 @@ def create_efficientnet_model(num_classes: int,
 
     return model
 
+def create_mask2former_model(num_classes: int,
+                      freeze_strategy: FreezeStrategy = FreezeStrategy.NO,
+                      _device: torch.device = torch.device("cpu")):
+
+    print("Creating Mask2Former (transformers) model for semantic segmentation...")
+
+    try:
+        from transformers import AutoImageProcessor, Mask2FormerForUniversalSegmentation
+    except Exception as e:  # pragma: no cover - provide clear guidance
+        raise ImportError(
+            "Mask2Former requires the 'transformers' package. Please install it, e.g. `pip install transformers`"
+        ) from e
+
+    class _Mask2FormerSemanticWrapper(nn.Module):
+
+        def __init__(self, checkpoint: str, num_classes: int):
+            super().__init__()
+            self.image_processor = AutoImageProcessor.from_pretrained(checkpoint)
+            self.model = Mask2FormerForUniversalSegmentation.from_pretrained(checkpoint)
+            self._reinit_num_classes(num_classes)
+            self.num_classes = num_classes
+
+            mean = torch.tensor(self.image_processor.image_mean, dtype=torch.float32).view(1, -1, 1, 1)
+            std = torch.tensor(self.image_processor.image_std, dtype=torch.float32).view(1, -1, 1, 1)
+            self.register_buffer("_img_mean", mean, persistent=False)
+            self.register_buffer("_img_std", std, persistent=False)
+
+        def _reinit_num_classes(self, num_classes: int) -> None:
+            try:
+                self.model.config.num_labels = num_classes
+            except Exception:
+                pass
+
+            try:
+                in_features = self.model.class_predictor.in_features
+            except Exception:
+                in_features = 256  # sensible default for most Mask2Former variants
+            new_cls = nn.Linear(in_features, num_classes)
+            nn.init.normal_(new_cls.weight, std=0.01)
+            nn.init.zeros_(new_cls.bias)
+            self.model.class_predictor = new_cls
+
+            try:
+                dec_class_embed = getattr(self.model, "decoder", None)
+                if dec_class_embed is not None and hasattr(dec_class_embed, "class_embed"):
+                    ce = dec_class_embed.class_embed
+                    if isinstance(ce, nn.ModuleList):
+                        for i in range(len(ce)):
+                            in_f = ce[i].in_features
+                            ce[i] = nn.Linear(in_f, num_classes)
+                            nn.init.normal_(ce[i].weight, std=0.01)
+                            nn.init.zeros_(ce[i].bias)
+                    elif isinstance(ce, nn.Linear):
+                        in_f = ce.in_features
+                        new_ce = nn.Linear(in_f, num_classes)
+                        nn.init.normal_(new_ce.weight, std=0.01)
+                        nn.init.zeros_(new_ce.bias)
+                        dec_class_embed.class_embed = new_ce
+            except Exception:
+                pass
+
+            try:
+                print(f"[Mask2Former] Reinitialized classification head and decoder for {num_classes} classes (no 'no-object'; background included).")
+            except Exception:
+                pass
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            b, c, h, w = x.shape
+            if c == 1:
+                x = x.repeat(1, 3, 1, 1)
+            elif c != 3:
+                if c > 3:
+                    x = x[:, :3]
+                else:
+                    x = x.repeat(1, (3 + c - 1) // c, 1, 1)[:, :3]
+
+            x = (x - self._img_mean) / (self._img_std + 1e-6)
+
+            pixel_mask = torch.ones((b, h, w), dtype=torch.long, device=x.device)
+
+            outputs = self.model(pixel_values=x, pixel_mask=pixel_mask)
+
+            class_logits = outputs.class_queries_logits  # raw logits per query
+            mask_logits = outputs.masks_queries_logits   # raw logits per query mask
+
+            class_probs = class_logits.softmax(dim=-1)  # [B, Q, C]
+            mask_probs = mask_logits.sigmoid()  # [B, Q, Hm, Wm]
+
+            score_maps = torch.einsum("bqc,bqhw->bchw", class_probs, mask_probs)
+
+            score_maps = torch.nn.functional.interpolate(
+                score_maps, size=(h, w), mode="bilinear", align_corners=False
+            )
+
+            return score_maps
+
+    checkpoint = "facebook/mask2former-swin-small-ade-semantic"
+    model = _Mask2FormerSemanticWrapper(checkpoint=checkpoint, num_classes=num_classes)
+
+    if freeze_strategy != FreezeStrategy.NO:
+        print(f"Applying freeze strategy: {freeze_strategy.name}")
+        classifier_prefixes = (
+            'model.class_predictor',
+            'model.decoder.class_embed',
+            'model.mask_embed',
+        )
+        apply_freeze(model, classifier_prefixes, strategy=freeze_strategy)
+
+    model.to(_device)
+    return model
 
 class CovidSegmenter(pl.LightningModule):
     def __init__(self,
@@ -224,7 +334,8 @@ class CovidSegmenter(pl.LightningModule):
             class_weights.tolist() if hasattr(class_weights, 'tolist') else class_weights
         )
 
-        self.model = create_fpn_with_resnet(num_classes, freeze_strategy, self.device)
+        # self.model = create_unet_with_resnet(num_classes, freeze_strategy, self.device)
+        self.model = create_mask2former_model(num_classes, freeze_strategy, self.device)
         self.model.to(self.device)
 
         # Initialize criterion without weights; will (optionally) be updated in on_fit_start
@@ -242,6 +353,12 @@ class CovidSegmenter(pl.LightningModule):
     def _common_step(self, batch, batch_idx, stage):
         image, mask = batch
         output = self(image)
+        # Safety check: ensure the model outputs exactly num_classes channels (background included)
+        if output.shape[1] != self.hparams.num_classes:
+            raise RuntimeError(
+                f"Model returned {output.shape[1]} channels but num_classes={self.hparams.num_classes}. "
+                f"Ensure the segmentation head is configured without a 'no-object' channel."
+            )
         loss = self.criterion(output, mask)
 
         l1_penalty = 0.0

@@ -20,17 +20,17 @@ from test import run_test_predictions, run_val_tta_evaluation
 
 SOURCE_SIZE: int = 512
 TARGET_SIZE: int = SOURCE_SIZE
-MAX_LR: float = 5e-5
+MAX_LR: float = 2e-5
 WEIGHT_DECAY: float = 1e-5
 L1_REG: float = 1e-6
 BATCH_SIZE: int = 16
 
 
-EPOCHS: int = 70
-PATIENCE: int = 20
+EPOCHS: int = 15
+PATIENCE: int = 5
 
-FINETUNE_EPOCHS: int = 100
-FINETUNE_PATIENCE: int = 30
+FINETUNE_EPOCHS: int = 50
+FINETUNE_PATIENCE: int = 10
 
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('high')
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         accelerator='mps',
         devices=1,
         max_epochs=EPOCHS,
-        callbacks=[checkpoint_callback],  # early_stopping_callback,
+        callbacks=[checkpoint_callback, early_stopping_callback],  # early_stopping_callback,
         logger=csv_logger,
         enable_progress_bar=True,
     )
@@ -100,7 +100,7 @@ if __name__ == '__main__':
         accelerator='mps',
         devices=1,
         max_epochs=FINETUNE_EPOCHS,
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback, finetune_early_stopping_callback],
         logger=csv_logger,
         enable_progress_bar=True,
     )
