@@ -15,7 +15,6 @@ torchaudio = "*"
 pandas = "*"
 matplotlib = "*"
 pyyaml = "*"
-transformers = ">=4.44"
 torchao = "*"
 pytorch-lightning = "*"
 torchmetrics = "*"
@@ -37,6 +36,8 @@ clearml = "*"
 segmentation-models-pytorch = "*"
 albumentations = "*"
 torchinfo = "*"
+ultralytics = "*"
+transformers = "*"
 
 [dev-packages]
 
