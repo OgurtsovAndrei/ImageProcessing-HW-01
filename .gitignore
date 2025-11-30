@@ -1872,3 +1872,20 @@ dmypy.json
 /Surface Detection/data/vesuvius-challenge-surface-detection/train_labels/4293224556.tif
 /Surface Detection/data/vesuvius-challenge-surface-detection/test.csv
 /Surface Detection/data/vesuvius-challenge-surface-detection/train.csv
+/covid-segmantation/sub.csv
+/covid-segmantation/sub-0.5886760950088501.csv
+/covid-segmantation/submission_miou_0.4811_TTA.csv
+/covid-segmantation/submission_miou_0.6319_TTA.csv
+/covid-segmantation/submission_miou_0.6358_TTA.csv
+/covid-segmantation/submission_miou_0.6373_TTA.csv
+/covid-segmantation/submission_miou_0.6461_TTA.csv
+/covid-segmantation/submission_miou_0.6668_TTA.csv
+/covid-segmantation/submission_miou_0.6812_TTA.csv
+/covid-segmantation/Unet-efficientnet.pt
+/covid-segmantation/Unet_efficientnet_b2_mIoU-0.451.pt
+/covid-segmantation/Unet_efficientnet_b2_mIoU-0.536.pt
+/covid-segmantation/Unet_efficientnet_b2_mIoU-0.543.pt
+/covid-segmantation/Unet_efficientnet_b2_mIoU-0.596.pt
+/covid-segmantation/Unet_efficientnet_b2_mIoU-0.634.pt
+/covid-segmantation/Unet_efficientnet_b2_mIoU-0.635.pt
+/covid-segmantation/Unet_efficientnet_b2_mIoU-0.658.pt
