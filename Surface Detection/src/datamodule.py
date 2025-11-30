@@ -145,17 +145,31 @@ class SurfaceDataModule(pl.LightningDataModule):
 
         for item in batch:
             x, y, frag_id = item
-            # IMPORTANT: Explicitly move to GPU now.
-            # This ensures the Resized and other transforms run on VRAM, avoiding CPU RAM spikes.
-            x = x.to(device, non_blocking=True)
-            y = y.to(device, non_blocking=True)
-
-            data = {"image": x, "label": y}
-            # Apply transforms (Resize + Augments)
-            data = transforms(data)
-
-            x_list.append(data["image"])
-            y_list.append(data["label"])
+            
+            # Workaround for MPS not supporting float64 which MONAI uses internally for some transforms
+            if device.type == "mps":
+                 # Ensure data is on CPU for transforms
+                 x = x.cpu()
+                 y = y.cpu()
+                 data = {"image": x, "label": y}
+                 # Apply transforms on CPU
+                 data = transforms(data)
+                 # Move to MPS device
+                 x_list.append(data["image"].to(device, non_blocking=True))
+                 y_list.append(data["label"].to(device, non_blocking=True))
+            else:
+                # IMPORTANT: Explicitly move to GPU now.
+                # This ensures the Resized and other transforms run on VRAM, avoiding CPU RAM spikes.
+                x = x.to(device, non_blocking=True)
+                y = y.to(device, non_blocking=True)
+    
+                data = {"image": x, "label": y}
+                # Apply transforms (Resize + Augments)
+                data = transforms(data)
+    
+                x_list.append(data["image"])
+                y_list.append(data["label"])
+            
             frag_ids.append(frag_id)
 
         # Stack into tensors -> (B, C, D, H, W)

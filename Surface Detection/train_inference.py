@@ -167,9 +167,16 @@ def main():
     
     # Iterate directly over the dataset
     for image, _, frag_id in tqdm(test_dataset, desc="Processing and saving 3D predictions"):
-        image_on_device = image.to(model.device)
-        processed_data = datamodule.val_image_augments({"image": image_on_device})
-        inputs_resized = processed_data["image"].unsqueeze(0)
+        if model.device.type == 'mps':
+             # Workaround for MPS/MONAI compatibility: run transforms on CPU
+             # image is already on CPU from dataset
+             processed_data = datamodule.val_image_augments({"image": image})
+             # Move to device
+             inputs_resized = processed_data["image"].to(model.device).unsqueeze(0)
+        else:
+             image_on_device = image.to(model.device)
+             processed_data = datamodule.val_image_augments({"image": image_on_device})
+             inputs_resized = processed_data["image"].unsqueeze(0)
 
         with torch.no_grad():
             frag_id_list = [frag_id]
