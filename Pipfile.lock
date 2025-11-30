@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c6c03ccd8079a5bff5527eeba0a6249b585ce30e8eb0562d5ecb3ea095e29329"
+            "sha256": "e5b3619bb34aa55e8717fe49a1294ce37726cb8e3f7e63a445b2bd6a2a6a581b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1158,6 +1158,28 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==3.11"
+        },
+        "imagecodecs": {
+            "hashes": [
+                "sha256:3735ea088321b0685e593c5d44fc1d146a84fcf6645c52ed136fa576e16c3572",
+                "sha256:4252b15f5ba55bc7d7aacf621f6bb6e73fd70e66d56277a1f26563198b2cd576",
+                "sha256:45a865690275a3a8893c4c54377c678a7b361ebe13dd3a9e22c66443a96b1c2a",
+                "sha256:58dbc0095142dcef55aaac392ee5bd8fb7c3656753e3c37424c3612209c656a4",
+                "sha256:7bcc214d6f6ecd2bd7b648a6ac5589edcde946bcb738b6c763ce1c864934c58c",
+                "sha256:a836d329f91c890d17b9dc3f3a2bba944a198ae741592c3cb0c4b9b097d10d34",
+                "sha256:bb0f4714e60dd94b94ca778b872fb90b885b83381228743903035d79b7e91a88",
+                "sha256:be6e2f4b6601b57cfc9fba2382da7e02ad43c44e3b037adbf275a11f688b231f",
+                "sha256:d4a3894b62ca6ad0c4d75cb0a0aac2a525c4a5c4a2a60defc5d7fb716a4bb355",
+                "sha256:dd61871455ae6c3486051e68e0d576d54e53c45d157ce233c4a09269f132bf48",
+                "sha256:e3d4cb2dc507c0bab057321333927575d1d611efe368e76b752f5ad3c55856ad",
+                "sha256:f4480973fcf2d826ba6806b7ac6f4d9bd72eeb557cfd3687ac885939d130ec47",
+                "sha256:f5d01cc85ca2fe354302b3650f4848e8f1d3174200277b7cb2624abed4d02ea5",
+                "sha256:faf4ab8f2f11694aa2d6ed7548ce1d1598a14e326a6bb3d50669ed5c7da764c6",
+                "sha256:fdb475f54d0abac3cfcde42ec47f606eea1d4afa52173420577317102d361ae5"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.11'",
+            "version": "==2025.11.11"
         },
         "imageio": {
             "hashes": [
@@ -3390,14 +3412,6 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==5.0.2"
-        },
-        "sniffio": {
-            "hashes": [
-                "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2",
-                "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"
-            ],
-            "markers": "python_version >= '3.7'",
-            "version": "==1.3.1"
         },
         "soupsieve": {
             "hashes": [
