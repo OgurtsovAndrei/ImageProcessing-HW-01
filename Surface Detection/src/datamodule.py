@@ -28,7 +28,7 @@ class SurfaceDataModule(pl.LightningDataModule):
         train_images_dir: Path,
         train_labels_dir: Path,
         volume_shape: Tuple[int, int, int] = (64, 64, 64),
-        val_split: float = 0.2,
+        val_split: float = 0.1,
         batch_size: int = BATCH_SIZE,
         num_workers: int = NUM_WORKERS
     ):

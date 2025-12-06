@@ -24,8 +24,12 @@ OUT_CHANNELS = 2  # background + papyrus (ignore class 2)
 # Training
 BATCH_SIZE = 2
 NUM_WORKERS = 1
-MAX_EPOCHS = 1
+MAX_EPOCHS = 2
 LEARNING_RATE = 2e-3
 
 # dataset
 USE_RATIO = 0.2
+
+# Validation
+VALIDATION_TTA = True
+TEST_TTA = True

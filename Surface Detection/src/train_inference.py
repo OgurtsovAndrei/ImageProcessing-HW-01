@@ -184,17 +184,24 @@ def main():
         input_tensor = image.unsqueeze(0).to(model.device)  # (1, C, D, H, W)
 
         with torch.no_grad():
-            # Sliding window inference (no global resizing)
-            logits = sliding_window_inference(
-                inputs=input_tensor,
-                roi_size=SW_ROI_SIZE,
-                sw_batch_size=4,
-                predictor=model,
-                overlap=SW_OVERLAP_TEST,
-            )
-            # logits: (B, Out_Channels, D, H, W)
-            probs = torch.softmax(logits, dim=1)
-            pred_class = torch.argmax(probs, dim=1)[0]  # (D, H, W)
+            if TEST_TTA:
+                # TTA Ensemble Strategy via Model Method
+                probs = model.tta_inference(input_tensor, overlap=SW_OVERLAP_TEST)
+                pred_class = torch.argmax(probs, dim=1)[0]  # (D, H, W)
+
+            else:
+                # Sliding window inference (no global resizing)
+                logits = sliding_window_inference(
+                    inputs=input_tensor,
+                    roi_size=SW_ROI_SIZE,
+                    sw_batch_size=4,
+                    predictor=model,
+                    overlap=SW_OVERLAP_TEST,
+                    progress=True,
+                )
+                # logits: (B, Out_Channels, D, H, W)
+                probs = torch.softmax(logits, dim=1)
+                pred_class = torch.argmax(probs, dim=1)[0]  # (D, H, W)
 
         # No resizing needed, output is already full size
         pred_saved = pred_class.byte().cpu().numpy()

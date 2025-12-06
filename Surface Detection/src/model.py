@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from typing import Tuple, Dict
 from monai.losses import DiceCELoss, TverskyLoss
 from monai.inferers import sliding_window_inference
-from config import MAX_EPOCHS, SW_ROI_SIZE, SW_OVERLAP
+from config import MAX_EPOCHS, SW_ROI_SIZE, SW_OVERLAP, VALIDATION_TTA
 
 class SurfaceSegmentation3D(pl.LightningModule):
     """3D Surface Segmentation using a custom network.
@@ -116,7 +116,7 @@ class SurfaceSegmentation3D(pl.LightningModule):
 
     def validation_step(self, batch: Tuple, batch_idx: int) -> torch.Tensor:
         inputs, targets, _ = batch
-        # Use sliding window inference for validation on full volume
+        # Step A (Standard): Run the existing sliding_window_inference logic
         logits = sliding_window_inference(
             inputs=inputs,
             roi_size=SW_ROI_SIZE,
@@ -131,7 +131,55 @@ class SurfaceSegmentation3D(pl.LightningModule):
         self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("val_dice", metrics["dice"], on_step=False, on_epoch=True, prog_bar=True)
         self.log("val_iou", metrics["iou"], on_step=False, on_epoch=True, prog_bar=True)
+
+        # Step B (TTA - Conditional)
+        if VALIDATION_TTA:
+            avg_probs = self.tta_inference(inputs, overlap=SW_OVERLAP)
+
+            # Calculate metrics (Dice/IoU) on this averaged result.
+            # Passing avg_probs as "logits" works for Hard Dice because argmax(softmax(probs)) == argmax(probs).
+            tta_metrics = self._compute_metrics(avg_probs, targets)
+
+            self.log("val_dice_tta", tta_metrics["dice"], on_step=False, on_epoch=True, prog_bar=True)
+            self.log("val_iou_tta", tta_metrics["iou"], on_step=False, on_epoch=True, prog_bar=True)
+
         return loss
+
+    def tta_inference(self, inputs: torch.Tensor, overlap: float) -> torch.Tensor:
+        """
+        Performs Test-Time Augmentation (TTA) inference by averaging predictions from 4 views:
+        Original, Flip Horizontal (dim 3), Flip Vertical (dim 4), Flip Both (dim 3 and 4).
+        """
+        tta_probs_sum = None
+        flip_configs = [[], [3], [4], [3, 4]]
+
+        for dims in flip_configs:
+            # Flip input
+            x_aug = torch.flip(inputs, dims=dims) if dims else inputs
+
+            # Inference
+            logits_aug = sliding_window_inference(
+                inputs=x_aug,
+                roi_size=SW_ROI_SIZE,
+                sw_batch_size=4,
+                predictor=self.forward,
+                overlap=overlap
+            )
+
+            # Flip output logits back
+            if dims:
+                logits_aug = torch.flip(logits_aug, dims=dims)
+
+            # Get probabilities
+            probs_aug = torch.softmax(logits_aug, dim=1)
+
+            if tta_probs_sum is None:
+                tta_probs_sum = probs_aug
+            else:
+                tta_probs_sum += probs_aug
+
+        # Average probabilities
+        return tta_probs_sum / len(flip_configs)
 
     def configure_optimizers(self):
         optimizer = optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)

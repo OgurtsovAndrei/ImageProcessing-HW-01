@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Tuple, Optional, List
 from config import USE_RATIO
 
+
 class SurfaceDataset3D(Dataset):
     """3D Surface Detection Dataset.
 
@@ -15,11 +16,11 @@ class SurfaceDataset3D(Dataset):
     """
 
     def __init__(
-        self,
-        images_dir: Path,
-        labels_dir: Optional[Path],
-        volume_files: Optional[List[str]] = None,
-        volume_shape: Tuple[int, int, int] = (64, 64, 64), # Kept for compatibility, unused
+            self,
+            images_dir: Path,
+            labels_dir: Optional[Path],
+            volume_files: Optional[List[str]] = None,
+            volume_shape: Tuple[int, int, int] = (64, 64, 64),  # Kept for compatibility, unused
     ):
         super().__init__()
         self.images_dir = images_dir
@@ -35,16 +36,16 @@ class SurfaceDataset3D(Dataset):
         """Validate and index provided volumes, updating self.volume_files."""
         # Determine source of files
         if self.volume_files is None:
-             print(f"No volume files specified. Scanning {self.images_dir}...")
-             # Priority: npy > npz > tif
-             extensions = [".npy", ".npz", ".tif"]
-             self.volume_files = []
-             # TODO: Add check for duplicates if multiple formats exist for the same volume.
-             # Currently assuming each volume appears only once across these formats.
-             for ext in extensions:
-                 # glob returns full paths, we just want filenames
-                 files = sorted([p.name for p in self.images_dir.glob(f"*{ext}")])
-                 self.volume_files.extend(files)
+            print(f"No volume files specified. Scanning {self.images_dir}...")
+            # Priority: npy > npz > tif
+            extensions = [".npy", ".npz", ".tif"]
+            self.volume_files = []
+            # TODO: Add check for duplicates if multiple formats exist for the same volume.
+            # Currently assuming each volume appears only once across these formats.
+            for ext in extensions:
+                # glob returns full paths, we just want filenames
+                files = sorted([p.name for p in self.images_dir.glob(f"*{ext}")])
+                self.volume_files.extend(files)
 
         print(f"Indexing volumes...")
         valid_files = []
@@ -55,7 +56,10 @@ class SurfaceDataset3D(Dataset):
                 continue
             valid_files.append(filename)
 
-        use_size = max(min(1,int(len(valid_files) * USE_RATIO)), len(valid_files))
+        use_size = min(
+            max(1, int(len(valid_files) * USE_RATIO)),
+            len(valid_files)
+        )
         self.volume_files = valid_files[:use_size]
         print(f"Found {len(self.volume_files)} volumes.")
 
@@ -71,14 +75,21 @@ class SurfaceDataset3D(Dataset):
         # 2. Cast to float32 (mps/half fix)
         # 3. Scale
         # 4. Add channel dim
+
+        if image.dtype != np.uint8:
+            raise TypeError(
+                f"Data Error: Expected image format 'uint8' (0-255), but got '{image.dtype}'. "
+                f"File: {filename}"
+            )
+
         image_t = torch.from_numpy(image).float().div_(255.0).unsqueeze(0)
 
         # Handle Mask
         if mask is not None:
-             mask_t = torch.from_numpy(mask).long().unsqueeze(0)
+            mask_t = torch.from_numpy(mask).long().unsqueeze(0)
         else:
-             # Return dummy mask for test set (class 2 is ignored in loss)
-             mask_t = torch.full_like(image_t, 2, dtype=torch.long)
+            # Return dummy mask for test set (class 2 is ignored in loss)
+            mask_t = torch.full_like(image_t, 2, dtype=torch.long)
 
         # Return fragment ID (filename without extension) for prediction grouping
         frag_id = Path(filename).stem
@@ -96,8 +107,8 @@ class SurfaceDataset3D(Dataset):
         return tifffile.imread(str(path))
 
     def _load_from_raw(
-        self,
-        volume_file: str,
+            self,
+            volume_file: str,
     ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Helper to load image and mask from raw TIFF files."""
         # Load from disk
