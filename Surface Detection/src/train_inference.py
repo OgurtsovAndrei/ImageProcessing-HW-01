@@ -14,14 +14,14 @@ from tqdm.auto import tqdm
 import torch.nn.functional as F
 import zipfile
 
-from src.config import (
+from config import (
     DATA_DIR, TRAIN_IMAGES_DIR, TRAIN_LABELS_DIR, TEST_IMAGES_DIR, OUTPUT_DIR, CHECKPOINT_DIR,
     MODEL_INPUT_SIZE, IN_CHANNELS, OUT_CHANNELS, MAX_EPOCHS, DEVICE
 )
-from src.datamodule import SurfaceDataModule
-from src.model import SurfaceSegmentation3D
-from src.dataset import SurfaceDataset3D
-from src.utils import get_best_checkpoint, post_process_3d, plot_three_axis_cuts
+from datamodule import SurfaceDataModule
+from model import SurfaceSegmentation3D
+from dataset import SurfaceDataset3D
+from utils import get_best_checkpoint, post_process_3d, plot_three_axis_cuts
 
 warnings.filterwarnings("ignore")
 
@@ -226,6 +226,3 @@ def main():
         print("Submission.zip created successfully.")
     else:
         print("No predictions generated.")
-
-if __name__ == "__main__":
-    main()

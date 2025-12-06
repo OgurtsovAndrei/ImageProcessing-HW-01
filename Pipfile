@@ -39,6 +39,8 @@ torchinfo = "*"
 ultralytics = "*"
 transformers = "*"
 imagecodecs = "*"
+kaggle = "*"
+memray = "*"
 
 [dev-packages]
 

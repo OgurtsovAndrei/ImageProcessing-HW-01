@@ -4,7 +4,7 @@ import torch.optim as optim
 import pytorch_lightning as pl
 from typing import Tuple, Dict
 from monai.losses import DiceCELoss, TverskyLoss
-from .config import MAX_EPOCHS
+from config import MAX_EPOCHS
 
 class SurfaceSegmentation3D(pl.LightningModule):
     """3D Surface Segmentation using a custom network.

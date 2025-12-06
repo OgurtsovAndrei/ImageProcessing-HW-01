@@ -20,5 +20,5 @@ OUT_CHANNELS = 2  # background + papyrus (ignore class 2)
 # Training
 BATCH_SIZE = 2
 NUM_WORKERS = 2
-MAX_EPOCHS = 100
+MAX_EPOCHS = 8
 LEARNING_RATE = 2e-3

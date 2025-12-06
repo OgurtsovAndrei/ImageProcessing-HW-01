@@ -6,8 +6,9 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from monai import transforms as MT
 
-from .dataset import SurfaceDataset3D
-from .config import BATCH_SIZE, NUM_WORKERS
+# from monai.data import Read
+from dataset import SurfaceDataset3D
+from config import BATCH_SIZE, NUM_WORKERS
 
 def custom_collate(batch):
     """Custom collate to handle variable size 3D volumes.

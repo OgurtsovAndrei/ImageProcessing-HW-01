@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import tifffile
 import matplotlib.pyplot as plt
 from skimage.morphology import remove_small_objects, ball
-from .config import DEVICE
+from config import DEVICE
 
 def get_best_checkpoint(
     checkpoint_dirs: Union[str, Path, List[Union[str, Path]]],
