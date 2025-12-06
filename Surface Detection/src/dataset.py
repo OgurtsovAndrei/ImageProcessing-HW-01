@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from pathlib import Path
 from typing import Tuple, Optional, List
+from config import USE_RATIO
 
 class SurfaceDataset3D(Dataset):
     """3D Surface Detection Dataset.
@@ -54,7 +55,8 @@ class SurfaceDataset3D(Dataset):
                 continue
             valid_files.append(filename)
 
-        self.volume_files = valid_files
+        use_size = max(min(1,int(len(valid_files) * USE_RATIO)), len(valid_files))
+        self.volume_files = valid_files[:use_size]
         print(f"Found {len(self.volume_files)} volumes.")
 
     def __len__(self) -> int:
