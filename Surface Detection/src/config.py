@@ -13,12 +13,16 @@ OUTPUT_DIR = Path("data/out")
 DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
 # Model architecture
-MODEL_INPUT_SIZE = (160, 160, 160)  # (depth, height, width) - resize volumes to this
+PATCH_SIZE = (96, 96, 96)
+MODEL_INPUT_SIZE = PATCH_SIZE
+SW_ROI_SIZE = PATCH_SIZE
+SW_OVERLAP = 0.1
+SW_OVERLAP_TEST = 0.5
 IN_CHANNELS = 1  # grayscale
 OUT_CHANNELS = 2  # background + papyrus (ignore class 2)
 
 # Training
 BATCH_SIZE = 2
 NUM_WORKERS = 2
-MAX_EPOCHS = 8
+MAX_EPOCHS = 1
 LEARNING_RATE = 2e-3

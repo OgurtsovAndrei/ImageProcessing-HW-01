@@ -66,10 +66,10 @@ class SurfaceDataset3D(Dataset):
         image, mask = self._load_from_raw(filename)
         # Optimization: Convert directly to Tensor to avoid intermediate numpy float64 copies
         # 1. Convert raw uint8/uint16 -> Tensor
-        # 2. Cast to float16
+        # 2. Cast to float32 (mps/half fix)
         # 3. Scale
         # 4. Add channel dim
-        image_t = torch.from_numpy(image).half().div_(255.0).unsqueeze(0)
+        image_t = torch.from_numpy(image).float().div_(255.0).unsqueeze(0)
 
         # Handle Mask
         if mask is not None:

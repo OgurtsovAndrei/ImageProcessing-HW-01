@@ -4,7 +4,8 @@ import torch.optim as optim
 import pytorch_lightning as pl
 from typing import Tuple, Dict
 from monai.losses import DiceCELoss, TverskyLoss
-from config import MAX_EPOCHS
+from monai.inferers import sliding_window_inference
+from config import MAX_EPOCHS, SW_ROI_SIZE, SW_OVERLAP
 
 class SurfaceSegmentation3D(pl.LightningModule):
     """3D Surface Segmentation using a custom network.
@@ -115,7 +116,14 @@ class SurfaceSegmentation3D(pl.LightningModule):
 
     def validation_step(self, batch: Tuple, batch_idx: int) -> torch.Tensor:
         inputs, targets, _ = batch
-        logits = self(inputs)
+        # Use sliding window inference for validation on full volume
+        logits = sliding_window_inference(
+            inputs=inputs,
+            roi_size=SW_ROI_SIZE,
+            sw_batch_size=4,
+            predictor=self.forward,
+            overlap=SW_OVERLAP
+        )
         loss = self._compute_loss(logits, targets)
 
         metrics = self._compute_metrics(logits, targets)

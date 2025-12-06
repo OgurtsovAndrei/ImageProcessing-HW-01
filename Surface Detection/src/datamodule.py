@@ -46,10 +46,10 @@ class SurfaceDataModule(pl.LightningDataModule):
         self.test_dataset = None
 
         # Define GPU-based augmentations using MONAI
-        # 1. Resize to target shape (trilinear for image, nearest for label)
+        # 1. Random Crop to patch size
         # 2. Apply Augmentations
         self.gpu_augments = MT.Compose([
-            MT.Resized(keys=["image", "label"], spatial_size=self.volume_shape, mode=["trilinear", "nearest"]),
+            MT.RandSpatialCropd(keys=["image", "label"], roi_size=self.volume_shape, random_size=False),
             MT.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
             MT.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=1),
             MT.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=2),
@@ -57,14 +57,10 @@ class SurfaceDataModule(pl.LightningDataModule):
             MT.RandShiftIntensityd(keys=["image"], offsets=0.1, prob=0.5),
             MT.RandGaussianNoised(keys=["image"], prob=0.3, mean=0.0, std=0.01),
         ])
-        # Validation transforms: Just Resize (for image AND label)
-        self.val_augments = MT.Compose([
-            MT.Resized(keys=["image", "label"], spatial_size=self.volume_shape, mode=["trilinear", "nearest"])
-        ])
+        # Validation transforms: No resizing (pass full volume)
+        self.val_augments = MT.Compose([])
         # Validation transforms for Image ONLY (for test set where labels are None)
-        self.val_image_augments = MT.Compose([
-            MT.Resized(keys=["image"], spatial_size=self.volume_shape, mode=["trilinear"])
-        ])
+        self.val_image_augments = MT.Compose([])
 
     def setup(self, stage: Optional[str] = None):
         """Setup datasets for different stages."""
@@ -123,7 +119,7 @@ class SurfaceDataModule(pl.LightningDataModule):
         """Create validation dataloader with custom collate for variable sizes."""
         return DataLoader(
             self.val_dataset,
-            batch_size=self.batch_size,
+            batch_size=1,
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=True,
