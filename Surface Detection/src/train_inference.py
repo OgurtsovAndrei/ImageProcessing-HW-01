@@ -1,19 +1,18 @@
 import os
 import warnings
+import datetime
 from pathlib import Path
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 from pytorch_lightning.loggers import CSVLogger
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from monai.networks.nets import SegResNet
 from monai.inferers import sliding_window_inference
 import pandas as pd
 import matplotlib.pyplot as plt
 import tifffile
 from tqdm.auto import tqdm
 import torch.nn.functional as F
-from monai.networks.nets import BasicUNet
 import zipfile
 
 from config import *
@@ -21,6 +20,7 @@ from datamodule import SurfaceDataModule
 from model import SurfaceSegmentation3D
 from dataset import SurfaceDataset3D
 from utils import get_best_checkpoint, post_process_3d, plot_three_axis_cuts
+from model_factory import get_model
 
 warnings.filterwarnings("ignore")
 
@@ -33,37 +33,26 @@ def main():
         volume_shape=MODEL_INPUT_SIZE,
     )
     datamodule.setup()
+    
+    # Dynamic Output Directory
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = OUTPUT_DIR / f"{MODEL_NAME}_{timestamp}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Run directory: {run_dir}")
 
-    # 2. Model
-
-    net = None
-    if True:  # the smallest model for test purpuses
-        net = BasicUNet(
-            spatial_dims=3,
-            in_channels=IN_CHANNELS,
-            out_channels=OUT_CHANNELS,
-            features=(4, 8, 16, 32, 64, 128),
-            dropout=0.2
-        )
-    else:
-        net = SegResNet(
-            spatial_dims=3,
-            in_channels=IN_CHANNELS,
-            out_channels=OUT_CHANNELS,
-            init_filters=16,
-            dropout_prob=0.2
-        )
+    net = get_model(MODEL_NAME)
     net_name = net.__class__.__name__
     model = SurfaceSegmentation3D(net=net)
 
-    # 3. Checkpoint Search
+    # 3. Checkpoint Search (for resuming or initial weights)
+    # We only look in global CHECKPOINT_DIR to avoid confusing with other runs
     ckpt_path, ckpt_score = get_best_checkpoint(
-        [OUTPUT_DIR, CHECKPOINT_DIR], name=net_name
+        [CHECKPOINT_DIR], name=net_name
     )
 
     # 4. Trainer
     checkpoint_callback = ModelCheckpoint(
-        dirpath=OUTPUT_DIR,
+        dirpath=run_dir,
         filename=net_name + "-{epoch:02d}-{val_dice:.4f}",
         monitor="val_dice",
         mode="max",
@@ -79,7 +68,7 @@ def main():
     )
 
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
-    csv_logger = CSVLogger(save_dir=OUTPUT_DIR)
+    csv_logger = CSVLogger(save_dir=run_dir)
 
     # Precision logic
     if DEVICE == "mps":
@@ -153,7 +142,7 @@ def main():
             if title == 'Loss':
                 plt.yscale('log')
             plt.tight_layout()
-            plt.savefig(f"{title.replace(' ', '_')}.png")  # Save instead of show
+            plt.savefig(run_dir / f"{title.replace(' ', '_')}.png")  # Save to run_dir
             plt.close()
 
     # 7. Inference
@@ -168,16 +157,16 @@ def main():
 
     )
 
-    # Load best model
+    # Load best model from THIS run
     best_checkpoint_path, _ = get_best_checkpoint(
-        [OUTPUT_DIR, CHECKPOINT_DIR], name=net_name)
+        [run_dir], name=net_name)
 
     # If no checkpoint found, we proceed with the current model state (which might be untrained if fit failed or wasn't needed)
     if best_checkpoint_path:
         print(f"Loading best checkpoint: {best_checkpoint_path}")
         model = SurfaceSegmentation3D.load_from_checkpoint(best_checkpoint_path, net=net)
     else:
-        print("No checkpoint found. Using current model state.")
+        print("No checkpoint found in run_dir. Using current model state.")
 
     model.eval()
     model.to(DEVICE)
@@ -215,31 +204,31 @@ def main():
         pred_saved = post_process_3d(pred_saved, min_size=20 * 20 * 35, device=DEVICE)
 
         prediction_tif_name = f"{frag_id}.tif"
-        save_path = OUTPUT_DIR / prediction_tif_name
+        save_path = run_dir / prediction_tif_name
         tifffile.imwrite(str(save_path), pred_saved)
         predictions_tif.append(prediction_tif_name)
 
-        # 8. Zip
-        if predictions_tif:
-            print("Visualizing first prediction...")
-            mask_path = OUTPUT_DIR / predictions_tif[0]
-            image_path = TEST_IMAGES_DIR / predictions_tif[0]
+    # 8. Zip
+    if predictions_tif:
+        print("Visualizing first prediction...")
+        mask_path = run_dir / predictions_tif[0]
+        image_path = TEST_IMAGES_DIR / predictions_tif[0]
 
-            # Check if image exists
-            if image_path.exists() and mask_path.exists():
-                plot_three_axis_cuts(str(image_path), str(mask_path))
+        # Check if image exists
+        if image_path.exists() and mask_path.exists():
+            plot_three_axis_cuts(str(image_path), str(mask_path))
 
-            print(f"Zipping {len(predictions_tif)} files...")
-            with zipfile.ZipFile('submission.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for filename in tqdm(predictions_tif, desc="Zipping files"):
-                    filepath = OUTPUT_DIR / filename
+        print(f"Zipping {len(predictions_tif)} files...")
+        with zipfile.ZipFile(run_dir / 'submission.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for filename in tqdm(predictions_tif, desc="Zipping files"):
+                filepath = run_dir / filename
 
-                    if not filepath.exists():
-                        print(f"Missing file: {filepath}")
-                        continue
+                if not filepath.exists():
+                    print(f"Missing file: {filepath}")
+                    continue
 
-                    zipf.write(filepath, arcname=filename)
-                    os.remove(filepath)
-            print("Submission.zip created successfully.")
-        else:
-            print("No predictions generated.")
+                zipf.write(filepath, arcname=filename)
+                # os.remove(filepath) 
+        print("Submission.zip created successfully.")
+    else:
+        print("No predictions generated.")

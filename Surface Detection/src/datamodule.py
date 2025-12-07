@@ -151,12 +151,18 @@ class SurfaceDataModule(pl.LightningDataModule):
                     else:
                         data["image"] = data["image"].float().div_(255.0)
 
-                    data["label"] = data["label"].long()
-
-                    data = aug_transforms(data)
+                    if device.type == "mps":
+                        data["label"] = data["label"].float()
+                        data["image"] = data["image"].contiguous()
+                        data["label"] = data["label"].contiguous()
+                        with torch.no_grad():
+                            data = aug_transforms(data)
+                    else:
+                        data["label"] = data["label"].long()
+                        data = aug_transforms(data)
 
                     x_list.append(data["image"])
-                    y_list.append(data["label"])
+                    y_list.append(data["label"].long())
                     frag_ids.append(frag_id)
             else:
                 if device.type != "mps":
