@@ -155,8 +155,17 @@ class SurfaceDataModule(pl.LightningDataModule):
                         data["label"] = data["label"].float()
                         data["image"] = data["image"].contiguous()
                         data["label"] = data["label"].contiguous()
+                            
+                        # Fix: Move to CPU for stable augmentation on MPS
+                        data["image"] = data["image"].cpu()
+                        data["label"] = data["label"].cpu()
+                            
                         with torch.no_grad():
                             data = aug_transforms(data)
+                            
+                        # Move back to MPS
+                        data["image"] = data["image"].to(device)
+                        data["label"] = data["label"].to(device)
                     else:
                         data["label"] = data["label"].long()
                         data = aug_transforms(data)
