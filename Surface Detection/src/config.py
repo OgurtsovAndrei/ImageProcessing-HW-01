@@ -14,7 +14,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is
 
 # Model architecture
 MODEL_NAME = "SwinUNETR"  # Or "SegResNet" - could be made configurable
-PATCH_SIZE = (96, 96, 96)
+SIDE_SIZE = 96
+PATCH_SIZE = (SIDE_SIZE, SIDE_SIZE, SIDE_SIZE)
 MODEL_INPUT_SIZE = PATCH_SIZE
 SW_ROI_SIZE = PATCH_SIZE
 SW_OVERLAP = 0.1

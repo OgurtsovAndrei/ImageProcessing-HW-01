@@ -1,5 +1,5 @@
 import torch.nn as nn
-from monai.networks.nets import BasicUNet, SegResNet, SwinUNETR
+from monai.networks.nets import BasicUNet, SegResNet, SwinUNETR, UNETR
 from config import IN_CHANNELS, OUT_CHANNELS
 
 
@@ -32,6 +32,16 @@ def get_model(model_name: str, **kwargs) -> nn.Module:
             spatial_dims=3,
             drop_rate=0.03,
             attn_drop_rate=0.03,
+            **kwargs
+        )
+    elif model_name == "UNETR":
+        return UNETR(
+            in_channels=IN_CHANNELS,
+            out_channels=OUT_CHANNELS,
+            img_size=(96, 96, 96),
+            feature_size=32,
+            spatial_dims=3,
+            dropout_rate=0.05,
             **kwargs
         )
     elif model_name == "SegResNet":
