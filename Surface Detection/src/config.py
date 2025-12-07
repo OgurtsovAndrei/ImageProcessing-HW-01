@@ -13,7 +13,7 @@ OUTPUT_DIR = Path("data/out")
 DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
 # Model architecture
-MODEL_NAME = "SwinUNETR"  # Or "SegResNet" - could be made configurable
+MODEL_NAME = "BasicUNet"  # Or "SegResNet" / SwinUNETR / UNETR /  - could be made configurable
 SIDE_SIZE = 96
 PATCH_SIZE = (SIDE_SIZE, SIDE_SIZE, SIDE_SIZE)
 MODEL_INPUT_SIZE = PATCH_SIZE

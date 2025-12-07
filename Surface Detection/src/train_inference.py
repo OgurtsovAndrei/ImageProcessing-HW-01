@@ -14,6 +14,8 @@ import tifffile
 from tqdm.auto import tqdm
 import torch.nn.functional as F
 import zipfile
+import numpy as np
+import json
 
 from config import *
 from datamodule import SurfaceDataModule
@@ -171,6 +173,80 @@ def main():
     model.eval()
     model.to(DEVICE)
 
+    # === Threshold Optimization ===
+    print("Starting Threshold Optimization...")
+    thresholds = np.arange(0.05, 1.0, 0.05)
+
+    global_tp = torch.zeros(len(thresholds), device=DEVICE)
+    global_pred_sum = torch.zeros(len(thresholds), device=DEVICE)
+    global_target_sum = torch.zeros(1, device=DEVICE)
+
+    val_loader = datamodule.val_dataloader()
+
+    with torch.no_grad():
+        for batch in tqdm(val_loader, desc="Optimizing Threshold"):
+            # Batch is list of tuples from custom_collate
+            x, y, _ = batch[0]
+
+            inputs = x.unsqueeze(0).to(DEVICE).float().div_(255.0)
+            targets = y.unsqueeze(0).to(DEVICE).long()
+
+            if TEST_TTA:
+                probs = model.tta_inference(inputs, overlap=SW_OVERLAP)
+            else:
+                logits = sliding_window_inference(
+                    inputs=inputs,
+                    roi_size=SW_ROI_SIZE,
+                    sw_batch_size=4,
+                    predictor=model,
+                    overlap=SW_OVERLAP,
+                    progress=False
+                )
+                probs = torch.softmax(logits, dim=1)
+
+            targets_sq = targets.squeeze(1)
+            valid_mask = (targets_sq != 2)
+
+            # Flatten relevant pixels
+            t_flat = targets_sq[valid_mask]
+            p_flat = probs[:, 1, ...][valid_mask]
+
+            # Vectorized stats
+            t_tensor = torch.from_numpy(thresholds).to(DEVICE).unsqueeze(0)
+            preds = p_flat.unsqueeze(1) > t_tensor
+
+            t_expanded = t_flat.unsqueeze(1)
+
+            tp_batch = (preds & (t_expanded == 1)).sum(dim=0)
+            pred_sum_batch = preds.sum(dim=0)
+            target_sum_batch = (t_flat == 1).sum()
+
+            global_tp += tp_batch
+            global_pred_sum += pred_sum_batch
+            global_target_sum += target_sum_batch
+
+    epsilon = 1e-6
+    dices = (2 * global_tp + epsilon) / (global_pred_sum + global_target_sum + epsilon)
+    ious = (global_tp + epsilon) / (global_pred_sum + global_target_sum - global_tp + epsilon)
+
+    # Print Table
+    print(f"\n{'Threshold':<10} | {'Dice':<8} | {'IoU':<8}")
+    print("-" * 32)
+    for i, thr in enumerate(thresholds):
+        print(f"{thr:<10.2f} | {dices[i].item():<8.4f} | {ious[i].item():<8.4f}")
+    print("-" * 32)
+
+    best_idx = torch.argmax(dices).item()
+    best_threshold = thresholds[best_idx]
+    best_dice = dices[best_idx].item()
+    best_iou = ious[best_idx].item()
+
+    print(f"Best Threshold: {best_threshold:.2f}, Dice: {best_dice:.4f}, IoU: {best_iou:.4f}")
+
+    with open(run_dir / "threshold.json", "w") as f:
+        json.dump({"best_threshold": float(best_threshold), "val_dice": best_dice, "val_iou": best_iou}, f, indent=4)
+    # ==============================
+
     predictions_tif = []
 
     # Iterate directly over the dataset
@@ -183,8 +259,6 @@ def main():
             if TEST_TTA:
                 # TTA Ensemble Strategy via Model Method
                 probs = model.tta_inference(input_tensor, overlap=SW_OVERLAP_TEST)
-                pred_class = torch.argmax(probs, dim=1)[0]  # (D, H, W)
-
             else:
                 # Sliding window inference (no global resizing)
                 logits = sliding_window_inference(
@@ -197,7 +271,9 @@ def main():
                 )
                 # logits: (B, Out_Channels, D, H, W)
                 probs = torch.softmax(logits, dim=1)
-                pred_class = torch.argmax(probs, dim=1)[0]  # (D, H, W)
+
+            # Apply Best Threshold
+            pred_class = (probs[:, 1] > best_threshold).long()[0]  # (D, H, W)
 
         # No resizing needed, output is already full size
         pred_saved = pred_class.byte().cpu().numpy()

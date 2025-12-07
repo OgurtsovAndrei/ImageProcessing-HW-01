@@ -8,7 +8,7 @@ from monai import transforms as MT
 
 import config
 from dataset import SurfaceDataset3D
-from config import BATCH_SIZE, NUM_WORKERS, DEVICE
+from config import BATCH_SIZE, NUM_WORKERS, DEVICE, SIDE_SIZE
 
 
 def custom_collate(batch):
@@ -46,14 +46,46 @@ class SurfaceDataModule(pl.LightningDataModule):
         ])
 
         self.gpu_augments = MT.Compose([
-            MT.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
             MT.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=1),
             MT.RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=2),
-            MT.RandRotated(keys=["image", "label"], range_x=0.1, range_y=0.1, range_z=0.1, prob=0.3, keep_size=True,
-                           mode=["bilinear", "nearest"]),
+            MT.RandRotate90d(keys=["image", "label"], prob=0.75, spatial_axes=(1, 2)),
+
+            # small random rotation / shift / scale (ShiftScaleRotate)
+            MT.RandAffined(
+                keys=["image", "label"],
+                prob=0.1,
+            ),
+
+            # brightness / contrast
             MT.RandShiftIntensityd(keys=["image"], offsets=0.1, prob=0.5),
-            MT.RandGaussianNoised(keys=["image"], prob=0.3, mean=0.0, std=0.01),
+            MT.RandAdjustContrastd(keys=["image"], prob=0.5, gamma=(0.9, 1.1)),
+
+            # OneOf noise / blur / motion blur
+            MT.OneOf(
+                [
+                    MT.RandGaussianNoised(keys=["image"], mean=0.0, std=0.05, prob=0.1),
+                    MT.RandGaussianSmoothd(keys=["image"], sigma_x=(0.3, 1.2), prob=0.1),
+                ],
+                weights=[1, 1]
+            ),
+
+            # grid distortion
+            MT.RandGridDistortiond(
+                keys=["image", "label"],
+                prob=0.1,
+                distort_limit=0.3,
+                num_cells=5
+            ),
+
+            # coarse dropout
+            MT.RandCoarseDropoutd(
+                keys=["image"],
+                holes=1,
+                spatial_size=(SIDE_SIZE // 20, SIDE_SIZE // 20),
+                prob=0.1
+            ),
         ])
+
         self.val_augments = MT.Compose([])
         self.val_image_augments = MT.Compose([])
 
@@ -155,14 +187,14 @@ class SurfaceDataModule(pl.LightningDataModule):
                         data["label"] = data["label"].float()
                         data["image"] = data["image"].contiguous()
                         data["label"] = data["label"].contiguous()
-                            
+
                         # Fix: Move to CPU for stable augmentation on MPS
                         data["image"] = data["image"].cpu()
                         data["label"] = data["label"].cpu()
-                            
+
                         with torch.no_grad():
                             data = aug_transforms(data)
-                            
+
                         # Move back to MPS
                         data["image"] = data["image"].to(device)
                         data["label"] = data["label"].to(device)
