@@ -81,13 +81,21 @@ def main():
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     csv_logger = CSVLogger(save_dir=OUTPUT_DIR)
 
+    # Precision logic
+    if DEVICE == "mps":
+        precision_val = 32
+    elif torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+        precision_val = "bf16-mixed"
+    else:
+        precision_val = "16-mixed"
+
     trainer = pl.Trainer(
         max_epochs=MAX_EPOCHS,
         accelerator="auto",
         devices="auto",
         logger=csv_logger,
         callbacks=[checkpoint_callback, early_stop_callback, lr_monitor],
-        precision="16-mixed" if DEVICE != "mps" else 32,
+        precision=precision_val,
         limit_val_batches=10,
         log_every_n_steps=10,
         enable_progress_bar=True,
@@ -104,10 +112,8 @@ def main():
 
     # 6. Metrics Plotting
     log_base_dir = Path(trainer.logger.save_dir) / 'lightning_logs'
-    # Get the latest version directory (assuming just trained)
     if trainer.logger.version is not None:
         version = trainer.logger.version
-        # version can be int or str 'version_0'
         if isinstance(version, int):
             metrics_path = log_base_dir / f"version_{version}" / 'metrics.csv'
         else:
@@ -181,7 +187,7 @@ def main():
     for image, _, frag_id in tqdm(test_dataset, desc="Processing and saving 3D predictions"):
         # image is (C, D, H, W) tensor
         # sliding_window_inference expects (B, C, D, H, W)
-        input_tensor = image.unsqueeze(0).to(model.device)  # (1, C, D, H, W)
+        input_tensor = image.unsqueeze(0).to(model.device).float().div_(255.0)
 
         with torch.no_grad():
             if TEST_TTA:
@@ -212,25 +218,27 @@ def main():
         tifffile.imwrite(str(save_path), pred_saved)
         predictions_tif.append(prediction_tif_name)
 
-    # 8. Zip
-    if predictions_tif:
-        # Visualize the first processed volume
-        print("Visualizing first prediction...")
-        mask_path = OUTPUT_DIR / predictions_tif[0]
-        image_path = TEST_IMAGES_DIR / predictions_tif[0]
-        # Check if image exists (it should)
-        if image_path.exists() and mask_path.exists():
-            plot_three_axis_cuts(str(image_path), str(mask_path))
+        # 8. Zip
+        if predictions_tif:
+            print("Visualizing first prediction...")
+            mask_path = OUTPUT_DIR / predictions_tif[0]
+            image_path = TEST_IMAGES_DIR / predictions_tif[0]
 
-        print(f"Zipping {len(predictions_tif)} files...")
-        with zipfile.ZipFile('submission.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for filename in tqdm(predictions_tif, desc="Zipping files"):
-                if not os.path.exists(filename):
-                    print(f"Missing <> {filename}")
-                    continue
-                zipf.write(filename)
-                # Remove original file to save space
-                os.remove(filename)
-        print("Submission.zip created successfully.")
-    else:
-        print("No predictions generated.")
+            # Check if image exists
+            if image_path.exists() and mask_path.exists():
+                plot_three_axis_cuts(str(image_path), str(mask_path))
+
+            print(f"Zipping {len(predictions_tif)} files...")
+            with zipfile.ZipFile('submission.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for filename in tqdm(predictions_tif, desc="Zipping files"):
+                    filepath = OUTPUT_DIR / filename
+
+                    if not filepath.exists():
+                        print(f"Missing file: {filepath}")
+                        continue
+
+                    zipf.write(filepath, arcname=filename)
+                    os.remove(filepath)
+            print("Submission.zip created successfully.")
+        else:
+            print("No predictions generated.")

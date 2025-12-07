@@ -82,7 +82,7 @@ class SurfaceDataset3D(Dataset):
                 f"File: {filename}"
             )
 
-        image_t = torch.from_numpy(image).float().div_(255.0).unsqueeze(0)
+        image_t = torch.from_numpy(image).unsqueeze(0)
 
         # Handle Mask
         if mask is not None:
