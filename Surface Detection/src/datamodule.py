@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from monai import transforms as MT
 
+import config
 from dataset import SurfaceDataset3D
 from config import BATCH_SIZE, NUM_WORKERS, DEVICE
 
@@ -121,6 +122,7 @@ class SurfaceDataModule(pl.LightningDataModule):
 
         device = self.trainer.strategy.root_device if self.trainer else torch.device(DEVICE)
 
+        # Выбираем точность
         if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
             target_dtype = torch.bfloat16
         else:
@@ -134,42 +136,38 @@ class SurfaceDataModule(pl.LightningDataModule):
             if device.type != "mps":
                 x = x.to(device, non_blocking=True)
                 y = y.to(device, non_blocking=True)
+            else:
+                x = x.to(device)
+                y = y.to(device)
 
-                data = {"image": x, "label": y}
+            if self.trainer.training:
+                for _ in range(config.SAMPLES_PER_VOLUME):
+                    data = {"image": x, "label": y}
 
-                if self.trainer.training:
                     data = self.crop_transforms(data)
 
-                    data["image"] = data["image"].to(dtype=target_dtype).div_(255.0)
+                    if device.type != "mps":
+                        data["image"] = data["image"].to(dtype=target_dtype).div_(255.0)
+                    else:
+                        data["image"] = data["image"].float().div_(255.0)
+
                     data["label"] = data["label"].long()
 
                     data = aug_transforms(data)
 
-                    x_final = data["image"]
-                    y_final = data["label"]
-                else:
-                    x_final = x.to(dtype=target_dtype).div_(255.0)
-                    y_final = y.long()
-
-                x_list.append(x_final)
-                y_list.append(y_final)
-
+                    x_list.append(data["image"])
+                    y_list.append(data["label"])
+                    frag_ids.append(frag_id)
             else:
-                x = x.cpu()
-                y = y.cpu()
-                data = {"image": x, "label": y}
+                if device.type != "mps":
+                    x_final = x.to(dtype=target_dtype).div_(255.0)
+                else:
+                    x_final = x.float().div_(255.0)
 
-                if self.trainer.training:
-                    data = self.crop_transforms(data)
-                    data = aug_transforms(data)
-
-                x_final = data["image"].to(device).float().div_(255.0)
-                y_final = data["label"].to(device).long()
+                y_final = y.long()
 
                 x_list.append(x_final)
                 y_list.append(y_final)
+                frag_ids.append(frag_id)
 
-            frag_ids.append(frag_id)
-
-        # Stack into tensors -> (B, C, D, H, W)
         return torch.stack(x_list), torch.stack(y_list), frag_ids

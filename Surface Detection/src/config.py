@@ -22,7 +22,8 @@ IN_CHANNELS = 1  # grayscale
 OUT_CHANNELS = 2  # background + papyrus (ignore class 2)
 
 # Training
-BATCH_SIZE = 2
+BATCH_SIZE = 4
+SAMPLES_PER_VOLUME = 4
 NUM_WORKERS = 2
 MAX_EPOCHS = 10
 LEARNING_RATE = 2e-3

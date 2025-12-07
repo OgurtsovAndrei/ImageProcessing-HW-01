@@ -165,6 +165,7 @@ def main():
         labels_dir=None,
         volume_files=test_files,
         volume_shape=datamodule.volume_shape
+
     )
 
     # Load best model
