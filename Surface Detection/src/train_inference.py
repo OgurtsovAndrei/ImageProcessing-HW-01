@@ -42,7 +42,7 @@ def main():
 
     net = get_model(MODEL_NAME)
     net_name = net.__class__.__name__
-    model = SurfaceSegmentation3D(net=net)
+    model = SurfaceSegmentation3D(net=net, learning_rate=LEARNING_RATE)
 
     # 3. Checkpoint Search (for resuming or initial weights)
     # We only look in global CHECKPOINT_DIR to avoid confusing with other runs
