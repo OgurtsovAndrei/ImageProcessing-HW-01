@@ -87,7 +87,7 @@ def main():
         logger=csv_logger,
         callbacks=[checkpoint_callback, early_stop_callback, lr_monitor],
         precision=precision_val,
-        limit_val_batches=10,
+        limit_val_batches=VAL_RATIO,
         log_every_n_steps=10,
         enable_progress_bar=True,
         accumulate_grad_batches=18,
@@ -185,45 +185,50 @@ def main():
 
     with torch.no_grad():
         for batch in tqdm(val_loader, desc="Optimizing Threshold"):
-            # Batch is list of tuples from custom_collate
-            x, y, _ = batch[0]
+            for sample in batch:
+                # Batch is list of tuples from custom_collate
+                x, y, _ = sample
 
-            inputs = x.unsqueeze(0).to(DEVICE).float().div_(255.0)
-            targets = y.unsqueeze(0).to(DEVICE).long()
+                inputs = x.unsqueeze(0).to(DEVICE).float().div_(255.0)
+                targets = y.unsqueeze(0).to(DEVICE).long()
 
-            if TEST_TTA:
-                probs = model.tta_inference(inputs, overlap=SW_OVERLAP)
-            else:
-                logits = sliding_window_inference(
-                    inputs=inputs,
-                    roi_size=SW_ROI_SIZE,
-                    sw_batch_size=4,
-                    predictor=model,
-                    overlap=SW_OVERLAP,
-                    progress=False
-                )
-                probs = torch.softmax(logits, dim=1)
+                if TEST_TTA:
+                    probs = model.tta_inference(inputs, overlap=SW_OVERLAP)
+                else:
+                    logits = sliding_window_inference(
+                        inputs=inputs,
+                        roi_size=SW_ROI_SIZE,
+                        sw_batch_size=4,
+                        predictor=model,
+                        overlap=SW_OVERLAP,
+                        progress=False
+                    )
+                    probs = torch.softmax(logits, dim=1)
 
-            targets_sq = targets.squeeze(1)
-            valid_mask = (targets_sq != 2)
+                targets_sq = targets.squeeze(1)
+                valid_mask = (targets_sq != 2)
 
-            # Flatten relevant pixels
-            t_flat = targets_sq[valid_mask]
-            p_flat = probs[:, 1, ...][valid_mask]
+                # Flatten relevant pixels
+                t_flat = targets_sq[valid_mask]
+                p_flat = probs[:, 1, ...][valid_mask]
 
-            # Vectorized stats
-            t_tensor = torch.from_numpy(thresholds).to(DEVICE).unsqueeze(0)
-            preds = p_flat.unsqueeze(1) > t_tensor
+                # Vectorized stats
+                threshold_values = torch.from_numpy(thresholds)
+                if DEVICE == "mps":
+                    threshold_values = threshold_values.to(torch.float32)
 
-            t_expanded = t_flat.unsqueeze(1)
+                t_tensor = threshold_values.to(DEVICE).unsqueeze(0)
+                preds = p_flat.unsqueeze(1) > t_tensor
 
-            tp_batch = (preds & (t_expanded == 1)).sum(dim=0)
-            pred_sum_batch = preds.sum(dim=0)
-            target_sum_batch = (t_flat == 1).sum()
+                t_expanded = t_flat.unsqueeze(1)
 
-            global_tp += tp_batch
-            global_pred_sum += pred_sum_batch
-            global_target_sum += target_sum_batch
+                tp_batch = (preds & (t_expanded == 1)).sum(dim=0)
+                pred_sum_batch = preds.sum(dim=0)
+                target_sum_batch = (t_flat == 1).sum()
+
+                global_tp += tp_batch
+                global_pred_sum += pred_sum_batch
+                global_target_sum += target_sum_batch
 
     epsilon = 1e-6
     dices = (2 * global_tp + epsilon) / (global_pred_sum + global_target_sum + epsilon)
@@ -277,7 +282,7 @@ def main():
 
         # No resizing needed, output is already full size
         pred_saved = pred_class.byte().cpu().numpy()
-        pred_saved = post_process_3d(pred_saved, min_size=20 * 20 * 35, device=DEVICE)
+        pred_saved = post_process_3d(pred_saved, min_size=1000, device=DEVICE)
 
         prediction_tif_name = f"{frag_id}.tif"
         save_path = run_dir / prediction_tif_name

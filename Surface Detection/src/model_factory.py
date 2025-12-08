@@ -1,6 +1,6 @@
 import torch.nn as nn
-from monai.networks.nets import BasicUNet, SegResNet, SwinUNETR, UNETR
-from config import IN_CHANNELS, OUT_CHANNELS
+from monai.networks.nets import BasicUNet, SegResNet, SwinUNETR, UNETR, SegResNetVAE, DynUNet
+from config import IN_CHANNELS, OUT_CHANNELS, PATCH_SIZE
 
 
 def get_model(model_name: str, **kwargs) -> nn.Module:
@@ -30,18 +30,43 @@ def get_model(model_name: str, **kwargs) -> nn.Module:
             feature_size=48,
             use_checkpoint=True,
             spatial_dims=3,
-            drop_rate=0.03,
-            attn_drop_rate=0.03,
+            drop_rate=0.05,
+            attn_drop_rate=0.05,
             **kwargs
         )
     elif model_name == "UNETR":
         return UNETR(
             in_channels=IN_CHANNELS,
             out_channels=OUT_CHANNELS,
-            img_size=(96, 96, 96),
+            img_size=PATCH_SIZE,
             feature_size=32,
             spatial_dims=3,
             dropout_rate=0.05,
+            **kwargs
+        )
+    elif model_name == "SegResNetVAE":
+        return SegResNetVAE(
+            input_image_size=PATCH_SIZE,
+            spatial_dims=3,
+            in_channels=IN_CHANNELS,
+            out_channels=OUT_CHANNELS,
+            init_filters=32,
+            dropout_prob=0.1,
+            vae_nz=128,
+            act="RELU",
+            norm="INSTANCE",
+            upsample_mode="deconv",
+        )
+    elif model_name == "DynUNet":
+        return DynUNet(
+            spatial_dims=3,
+            in_channels=IN_CHANNELS,
+            out_channels=OUT_CHANNELS,
+            upsample_kernel_size=[2, 2, 2, 2, 2, 2],
+            filters=[24, 48, 96, 192, 384],
+            strides=[1, 2, 2, 2, 2],
+            kernel_size=[3, 3, 3, 3, 3],
+            dropout=0.1,
             **kwargs
         )
     elif model_name == "SegResNet":

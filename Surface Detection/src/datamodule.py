@@ -41,7 +41,8 @@ class SurfaceDataModule(pl.LightningDataModule):
             MT.RandSpatialCropd(
                 keys=["image", "label"],
                 roi_size=self.volume_shape,
-                random_size=False
+                random_size=False,
+                # use num_samples = ...
             ),
         ])
 
@@ -81,7 +82,7 @@ class SurfaceDataModule(pl.LightningDataModule):
             MT.RandCoarseDropoutd(
                 keys=["image"],
                 holes=1,
-                spatial_size=(SIDE_SIZE // 20, SIDE_SIZE // 20),
+                spatial_size=(SIDE_SIZE // 16, SIDE_SIZE // 16, SIDE_SIZE // 16),
                 prob=0.1
             ),
         ])
