@@ -121,6 +121,8 @@ class SurfaceSegmentation3D(pl.LightningModule):
         if vae_loss is not None:
             loss = seg_loss + lambda_vae * vae_loss
             self.log("train_vae_loss", vae_loss, prog_bar=False, on_step=False, on_epoch=True)
+            ratio = (lambda_vae * vae_loss) / seg_loss
+            self.log("vae_ratio", ratio, on_step=False, on_epoch=True)
         else:
             loss = seg_loss
 
