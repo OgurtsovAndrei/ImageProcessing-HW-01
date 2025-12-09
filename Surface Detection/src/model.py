@@ -5,7 +5,8 @@ import pytorch_lightning as pl
 from typing import Tuple, Dict
 from monai.losses import DiceCELoss, TverskyLoss
 from monai.inferers import sliding_window_inference
-from config import MAX_EPOCHS, SW_ROI_SIZE, SW_OVERLAP, VALIDATION_TTA
+from config import MAX_EPOCHS, SW_ROI_SIZE, SW_OVERLAP, VALIDATION_TTA, VAE_LAMBDA
+
 
 class SurfaceSegmentation3D(pl.LightningModule):
     """3D Surface Segmentation using a custom network.
@@ -16,13 +17,13 @@ class SurfaceSegmentation3D(pl.LightningModule):
     """
 
     def __init__(
-        self,
-        net: nn.Module,
-        out_channels: int = 2,
-        spatial_dims: int = 3,
-        learning_rate: float = 1e-3,
-        weight_decay: float = 1e-4,
-        ignore_index_val: int = 2
+            self,
+            net: nn.Module,
+            out_channels: int = 2,
+            spatial_dims: int = 3,
+            learning_rate: float = 1e-3,
+            weight_decay: float = 1e-4,
+            ignore_index_val: int = 2
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["net"])
@@ -48,7 +49,10 @@ class SurfaceSegmentation3D(pl.LightningModule):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net_module(x)
+        out = self.net_module(x)
+        if isinstance(out, tuple):  # FIX: SegResNetVAE возвращает (logits, loss), нам нужны только logits
+            return out[0]
+        return out
 
     def _compute_loss(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Compute loss excluding class 2 (unlabeled). Optimized for GPU."""
@@ -78,14 +82,14 @@ class SurfaceSegmentation3D(pl.LightningModule):
     def _compute_metrics(self, preds_logits: torch.Tensor, targets_class_indices: torch.Tensor) -> dict:
         preds_proba = torch.softmax(preds_logits, dim=1)
         preds_hard = torch.argmax(preds_proba, dim=1, keepdim=True)
-        valid_mask = (targets_class_indices != self.ignore_index_val).float() # (B, 1, D, H, W)
-        num_classes = preds_logits.shape[1] # This will be 2 (background, foreground)
+        valid_mask = (targets_class_indices != self.ignore_index_val).float()  # (B, 1, D, H, W)
+        num_classes = preds_logits.shape[1]  # This will be 2 (background, foreground)
         dice_scores_per_class = []
         iou_scores_per_class = []
 
         for i in range(num_classes):
-            pred_class_i = (preds_hard == i).float() # (B, 1, D, H, W)
-            target_class_i = (targets_class_indices == i).float() # (B, 1, D, H, W)
+            pred_class_i = (preds_hard == i).float()  # (B, 1, D, H, W)
+            target_class_i = (targets_class_indices == i).float()  # (B, 1, D, H, W)
 
             pred_class_i_valid = pred_class_i * valid_mask
             target_class_i_valid = target_class_i * valid_mask
@@ -102,10 +106,23 @@ class SurfaceSegmentation3D(pl.LightningModule):
         mean_iou = torch.mean(torch.stack(iou_scores_per_class))
         return {"dice": mean_dice, "iou": mean_iou}
 
-    def training_step(self, batch: Tuple, batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch, batch_idx):
         inputs, targets, _ = batch
-        logits = self(inputs)
-        loss = self._compute_loss(logits, targets)
+
+        out = self.net_module(inputs)
+        if isinstance(out, tuple):
+            logits, vae_loss = out
+        else:
+            logits, vae_loss = out, None
+
+        seg_loss = self._compute_loss(logits, targets)
+
+        lambda_vae = VAE_LAMBDA
+        if vae_loss is not None:
+            loss = seg_loss + lambda_vae * vae_loss
+            self.log("train_vae_loss", vae_loss, prog_bar=False, on_step=False, on_epoch=True)
+        else:
+            loss = seg_loss
 
         metrics = self._compute_metrics(logits, targets)
 
