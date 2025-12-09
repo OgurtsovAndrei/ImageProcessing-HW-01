@@ -38,11 +38,13 @@ class SurfaceDataModule(pl.LightningDataModule):
         self.test_dataset = None
 
         self.crop_transforms = MT.Compose([
-            MT.RandSpatialCropd(
+            MT.RandCropByPosNegLabeld(
                 keys=["image", "label"],
-                roi_size=self.volume_shape,
-                random_size=False,
-                # use num_samples = ...
+                label_key="label",
+                spatial_size=self.volume_shape,
+                pos=2,
+                neg=1,
+                num_samples=config.SAMPLES_PER_VOLUME,
             ),
         ])
 
@@ -148,74 +150,59 @@ class SurfaceDataModule(pl.LightningDataModule):
         )
 
     def on_after_batch_transfer(self, batch, dataloader_idx):
-        if not isinstance(batch, list):
-            return super().on_after_batch_transfer(batch, dataloader_idx)
-
-        x_list, y_list, frag_ids = [], [], []
-
         device = self.trainer.strategy.root_device if self.trainer else torch.device(DEVICE)
 
-        # Выбираем точность
         if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
             target_dtype = torch.bfloat16
         else:
             target_dtype = torch.float32
 
-        aug_transforms = self.gpu_augments if self.trainer.training else self.val_augments
+        # =============================
+        # VALIDATION
+        # =============================
+        if not self.trainer.training:
+            x_list, y_list, frag_ids = [], [], []
+            for item in batch:
+                x, y, frag_id = item
+                x = x.to(device, dtype=target_dtype).div_(255.0)
+                y = y.to(device).long()
+                x_list.append(x)
+                y_list.append(y)
+                frag_ids.append(frag_id)
+            return torch.stack(x_list), torch.stack(y_list), frag_ids
+
+        # =============================
+        # TRAINING
+        # =============================
+        aug = self.gpu_augments
+        x_list, y_list, frag_ids = [], [], []
 
         for item in batch:
             x, y, frag_id = item
 
-            if device.type != "mps":
-                x = x.to(device, non_blocking=True)
-                y = y.to(device, non_blocking=True)
-            else:
-                x = x.to(device)
-                y = y.to(device)
+            x = x.to(device)
+            y = y.to(device)
 
-            if self.trainer.training:
-                for _ in range(config.SAMPLES_PER_VOLUME):
-                    data = {"image": x, "label": y}
+            # Use MONAI transform → returns list of dicts
+            crops = self.crop_transforms({"image": x, "label": y})
 
-                    data = self.crop_transforms(data)
+            for c in crops:
+                img = c["image"].to(device)
+                lbl = c["label"].to(device).long()
 
-                    if device.type != "mps":
-                        data["image"] = data["image"].to(dtype=target_dtype).div_(255.0)
-                    else:
-                        data["image"] = data["image"].float().div_(255.0)
+                img = img.to(dtype=target_dtype).div_(255.0)
 
-                    if device.type == "mps":
-                        data["label"] = data["label"].float()
-                        data["image"] = data["image"].contiguous()
-                        data["label"] = data["label"].contiguous()
-
-                        # Fix: Move to CPU for stable augmentation on MPS
-                        data["image"] = data["image"].cpu()
-                        data["label"] = data["label"].cpu()
-
-                        with torch.no_grad():
-                            data = aug_transforms(data)
-
-                        # Move back to MPS
-                        data["image"] = data["image"].to(device)
-                        data["label"] = data["label"].to(device)
-                    else:
-                        data["label"] = data["label"].long()
-                        data = aug_transforms(data)
-
-                    x_list.append(data["image"])
-                    y_list.append(data["label"].long())
-                    frag_ids.append(frag_id)
-            else:
-                if device.type != "mps":
-                    x_final = x.to(dtype=target_dtype).div_(255.0)
+                if device.type == "mps":
+                    cpu_aug = aug({"image": img.cpu(), "label": lbl.cpu()})
+                    img = cpu_aug["image"].to(device)
+                    lbl = cpu_aug["label"].to(device).long()
                 else:
-                    x_final = x.float().div_(255.0)
+                    out = aug({"image": img, "label": lbl})
+                    img = out["image"]
+                    lbl = out["label"].long()
 
-                y_final = y.long()
-
-                x_list.append(x_final)
-                y_list.append(y_final)
+                x_list.append(img)
+                y_list.append(lbl)
                 frag_ids.append(frag_id)
 
         return torch.stack(x_list), torch.stack(y_list), frag_ids
