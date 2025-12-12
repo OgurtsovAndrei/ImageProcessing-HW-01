@@ -1,6 +1,7 @@
 import torch.nn as nn
 from monai.networks.nets import BasicUNet, SegResNet, SwinUNETR, UNETR, SegResNetVAE, DynUNet
 from config import IN_CHANNELS, OUT_CHANNELS, PATCH_SIZE
+from swin_unetr_vae import SwinUNETRVAE
 
 
 def get_model(model_name: str, **kwargs) -> nn.Module:
@@ -76,6 +77,21 @@ def get_model(model_name: str, **kwargs) -> nn.Module:
             out_channels=OUT_CHANNELS,
             init_filters=16,
             dropout_prob=0.2,
+            **kwargs
+        )
+    elif model_name == "SwinUNETRVAE":
+        return SwinUNETRVAE(
+            input_image_size=PATCH_SIZE,
+            in_channels=IN_CHANNELS,
+            out_channels=OUT_CHANNELS,
+            spatial_dims=3,
+            feature_size=48,
+            vae_nz=256,
+            vae_default_std=0.3,
+            vae_estimate_std=False,
+            drop_rate=0.1,
+            attn_drop_rate=0.1,
+            use_checkpoint=True,
             **kwargs
         )
     else:

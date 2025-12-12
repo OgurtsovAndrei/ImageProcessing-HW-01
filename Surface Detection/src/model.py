@@ -50,7 +50,7 @@ class SurfaceSegmentation3D(pl.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.net_module(x)
-        if isinstance(out, tuple):  # FIX: SegResNetVAE возвращает (logits, loss), нам нужны только logits
+        if isinstance(out, tuple):  # FIX: SegResNetVAE / SwinUNETRVAE returns (logits, loss), we need only logits
             return out[0]
         return out
 
