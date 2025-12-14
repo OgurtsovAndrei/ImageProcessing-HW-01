@@ -1889,3 +1889,4 @@ dmypy.json
 /covid-segmantation/Unet_efficientnet_b2_mIoU-0.634.pt
 /covid-segmantation/Unet_efficientnet_b2_mIoU-0.635.pt
 /covid-segmantation/Unet_efficientnet_b2_mIoU-0.658.pt
+/lora/data/

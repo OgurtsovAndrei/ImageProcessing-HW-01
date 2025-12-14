@@ -41,6 +41,8 @@ transformers = "*"
 imagecodecs = "*"
 kaggle = "*"
 memray = "*"
+diffusers = "*"
+peft = "*"
 
 [dev-packages]
 
