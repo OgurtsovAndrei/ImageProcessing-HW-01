@@ -45,6 +45,7 @@ diffusers = "*"
 peft = "*"
 sentencepiece = "*"
 qwen-vl-utils = "*"
+google-generativeai = "*"
 
 [dev-packages]
 
