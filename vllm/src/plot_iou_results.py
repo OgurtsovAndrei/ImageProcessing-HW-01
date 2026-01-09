@@ -2,14 +2,17 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from pathlib import Path
+
+
 def main():
-    yolo_file = Path("yolo_iou_results.txt")
+    yolo_file = Path("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/yolo_iou_results.txt")
     if not yolo_file.exists():
         print(f"Error: {yolo_file} not found.")
         return
     yolo_data = pd.read_csv(yolo_file, sep="\t")
     yolo_curve = yolo_data[yolo_data['Size'] > 0]
-    vlm_file = Path("vlm_fine_tune_results.txt")
+    vlm_file = Path(
+        "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/qwen2_vl_fine_tune_results.txt")
     if not vlm_file.exists():
         print(f"Error: {vlm_file} not found.")
         return
@@ -29,8 +32,10 @@ def main():
     plt.legend()
     plt.grid(True, which="both", ls="-", alpha=0.5)
     plt.ylim(0, 1.0)
-    output_path = Path("results_iou_plot.png")
+    output_path = Path("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/plots/results_iou_plot.png")
     plt.savefig(output_path)
     print(f"Plot saved to {output_path}")
+
+
 if __name__ == "__main__":
     main()

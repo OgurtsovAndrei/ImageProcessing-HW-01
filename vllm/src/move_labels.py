@@ -1,6 +1,8 @@
 import os
 import shutil
 from pathlib import Path
+
+
 def move_labels(images_dir, labels_src_dir, labels_dst_dir):
     images_dir = Path(images_dir)
     labels_src_dir = Path(labels_src_dir)
@@ -13,6 +15,8 @@ def move_labels(images_dir, labels_src_dir, labels_dst_dir):
         if src_label.exists():
             shutil.move(str(src_label), str(labels_dst_dir / f"{base}.txt"))
             print(f"Moved {src_label.name}")
+
+
 if __name__ == "__main__":
     data_root = "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/data"
     print("Moving valid labels...")

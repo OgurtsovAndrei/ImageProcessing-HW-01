@@ -86,4 +86,6 @@
 
 The comparison clearly shows that while the VLM has some general understanding of the objects (Mean IoU ~0.24 in zero-shot), it struggles with the precision required for object detection as measured by mAP@0.5, especially when compared to a specialized detector like YOLOv8n. Even with fine-tuning, the VLM's detection performance improves slowly, whereas YOLOv8n quickly reaches high accuracy with minimal data.
 
-The final plots `results_plot.png` (mAP@0.5) and `results_iou_plot.png` (Mean IoU) visualize these trends across all training sample sizes.
+The final plots visualize these trends:
+![mAP@0.5 Comparison](plots/results_plot.png)
+![Mean IoU Comparison](plots/results_iou_plot.png)

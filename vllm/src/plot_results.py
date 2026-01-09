@@ -2,10 +2,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from pathlib import Path
+
+
 def main():
-    yolo_file = Path("progressive_results.txt")
+    yolo_file = Path(
+        "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/yolo_progressive_results.txt")
     yolo_data = pd.read_csv(yolo_file, sep="\t")
-    vlm_file = Path("vlm_fine_tune_results.txt")
+    vlm_file = Path(
+        "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/qwen2_vl_fine_tune_results.txt")
     vlm_data = pd.read_csv(vlm_file, sep="\t")
     zero_shot_vlm_map50 = 0.0269
     gemini_zero_shot_map50 = 0.1130
@@ -21,9 +25,11 @@ def main():
     plt.title('Comparison of Object Detection Performance')
     plt.legend()
     plt.grid(True, which="both", ls="-", alpha=0.5)
-    output_path = Path("results_plot.png")
+    output_path = Path("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/plots/results_plot.png")
     plt.savefig(output_path)
     print(f"Plot saved to {output_path}")
     plt.show()
+
+
 if __name__ == "__main__":
     main()

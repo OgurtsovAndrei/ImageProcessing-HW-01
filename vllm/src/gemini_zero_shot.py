@@ -8,8 +8,11 @@ import google.generativeai as genai
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from zero_shot_detection import calculate_iou, load_yolo_annotation, evaluate_predictions, parse_model_output
+
+
 def process_single_image(model, img_path, prompt, test_labels_dir):
     try:
         image = Image.open(img_path).convert("RGB")
@@ -33,6 +36,8 @@ def process_single_image(model, img_path, prompt, test_labels_dir):
             "success": False,
             "error": str(e)
         }
+
+
 def main():
     api_key = os.environ.get("GEMINI_API_KEY2")
     if not api_key:
@@ -61,7 +66,8 @@ Return ONLY the JSON object."""
     results = []
     max_workers = 32
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_single_image, model, img_path, prompt, test_labels_dir) for img_path in test_images]
+        futures = [executor.submit(process_single_image, model, img_path, prompt, test_labels_dir) for img_path in
+                   test_images]
         for future in tqdm(futures, desc="Processing images with Gemini (parallel)"):
             results.append(future.result())
     all_gt_boxes = []
@@ -80,22 +86,24 @@ Return ONLY the JSON object."""
             all_pred_boxes.append([])
     if all_gt_boxes:
         metrics = evaluate_predictions(all_gt_boxes, all_pred_boxes)
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Gemini Zero-shot Results:")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
         print(f"Total test images: {len(test_images)}")
         print(f"Mean IoU: {metrics['mean_iou']:.4f}")
         print(f"mAP@0.5: {metrics['map50']:.4f}")
         print(f"Precision: {metrics['precision']:.4f}")
         print(f"Recall: {metrics['recall']:.4f}")
-        print(f"{'='*50}")
-        with open("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/src/gemini_results.txt", "w") as f:
+        print(f"{'=' * 50}")
+        with open("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/gemini_zero_shot_results.txt",
+                  "w") as f:
             f.write(f"Gemini Zero-shot Results:\n")
             f.write(f"Mean IoU: {metrics['mean_iou']:.4f}\n")
             f.write(f"mAP@0.5: {metrics['map50']:.4f}\n")
             f.write(f"Precision: {metrics['precision']:.4f}\n")
             f.write(f"Recall: {metrics['recall']:.4f}\n")
-        with open("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/src/gemini_results.json", "w") as f:
+        with open("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/gemini_zero_shot_results.json",
+                  "w") as f:
             json.dump({
                 "mean_iou": float(metrics['mean_iou']),
                 "map50": float(metrics['map50']),
@@ -106,5 +114,7 @@ Return ONLY the JSON object."""
             }, f, indent=2)
     else:
         print("No results to report")
+
+
 if __name__ == "__main__":
     main()

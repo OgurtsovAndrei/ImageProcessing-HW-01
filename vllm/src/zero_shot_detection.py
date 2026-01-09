@@ -7,6 +7,8 @@ from tqdm import tqdm
 import numpy as np
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from qwen_vl_utils import process_vision_info
+
+
 def calculate_iou(box1, box2):
     """
     Calculate IoU between two bounding boxes.
@@ -32,6 +34,8 @@ def calculate_iou(box1, box2):
     union_area = box1_area + box2_area - inter_area
     iou = inter_area / union_area if union_area > 0 else 0
     return iou
+
+
 def load_yolo_annotation(label_path):
     """Load YOLO format annotation: class_id x_center y_center width height"""
     boxes = []
@@ -43,6 +47,8 @@ def load_yolo_annotation(label_path):
                     class_id, x_center, y_center, width, height = parts
                     boxes.append([float(x_center), float(y_center), float(width), float(height)])
     return boxes
+
+
 def parse_model_output(output_text, img_width, img_height):
     """
     Parse model output to extract bounding boxes.
@@ -53,7 +59,7 @@ def parse_model_output(output_text, img_width, img_height):
         start_idx = output_text.find('{')
         end_idx = output_text.rfind('}')
         if start_idx != -1 and end_idx != -1:
-            json_str = output_text[start_idx:end_idx+1]
+            json_str = output_text[start_idx:end_idx + 1]
             data = json.loads(json_str)
             if 'objects' in data:
                 for obj in data['objects']:
@@ -62,7 +68,7 @@ def parse_model_output(output_text, img_width, img_height):
                         if isinstance(bbox, list) and len(bbox) == 4:
                             x1, y1, x2, y2 = bbox
                             if x2 > 1 or y2 > 1:
-                                x1, y1, x2, y2 = x1/img_width, y1/img_height, x2/img_width, y2/img_height
+                                x1, y1, x2, y2 = x1 / img_width, y1 / img_height, x2 / img_width, y2 / img_height
                             x_center = (x1 + x2) / 2
                             y_center = (y1 + y2) / 2
                             width = abs(x2 - x1)
@@ -73,7 +79,7 @@ def parse_model_output(output_text, img_width, img_height):
                     if isinstance(bbox, list) and len(bbox) == 4:
                         x1, y1, x2, y2 = bbox
                         if x2 > 1 or y2 > 1:
-                            x1, y1, x2, y2 = x1/img_width, y1/img_height, x2/img_width, y2/img_height
+                            x1, y1, x2, y2 = x1 / img_width, y1 / img_height, x2 / img_width, y2 / img_height
                         x_center = (x1 + x2) / 2
                         y_center = (y1 + y2) / 2
                         width = abs(x2 - x1)
@@ -86,7 +92,7 @@ def parse_model_output(output_text, img_width, img_height):
             for match in matches:
                 x1, y1, x2, y2 = [float(x) for x in match]
                 if x2 > 1 or y2 > 1:
-                    x1, y1, x2, y2 = x1/img_width, y1/img_height, x2/img_width, y2/img_height
+                    x1, y1, x2, y2 = x1 / img_width, y1 / img_height, x2 / img_width, y2 / img_height
                 x_center = (x1 + x2) / 2
                 y_center = (y1 + y2) / 2
                 width = abs(x2 - x1)
@@ -95,6 +101,8 @@ def parse_model_output(output_text, img_width, img_height):
     except Exception as e:
         print(f"Error parsing output: {e}")
     return boxes
+
+
 def evaluate_predictions(all_gt_boxes, all_pred_boxes, iou_threshold=0.5):
     """
     Calculate Mean IoU and mAP@0.5.
@@ -149,6 +157,8 @@ def evaluate_predictions(all_gt_boxes, all_pred_boxes, iou_threshold=0.5):
         "fp": fp,
         "fn": fn
     }
+
+
 def main():
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     print(f"Using device: {device}")
@@ -170,8 +180,8 @@ def main():
         model.eval()
         processor = AutoProcessor.from_pretrained(
             model_name,
-            min_pixels=256*28*28,
-            max_pixels=512*28*28
+            min_pixels=256 * 28 * 28,
+            max_pixels=512 * 28 * 28
         )
     except Exception as e:
         print(f"Error loading model: {e}")
@@ -239,17 +249,18 @@ Where coordinates are in pixels relative to the image dimensions."""
             all_pred_boxes.append([])
     if all_gt_boxes:
         metrics = evaluate_predictions(all_gt_boxes, all_pred_boxes)
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Results:")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
         print(f"Total test images: {len(test_images)}")
         print(f"Successfully processed: {len(results)}")
         print(f"Mean IoU: {metrics['mean_iou']:.4f}")
         print(f"mAP@0.5: {metrics['map50']:.4f}")
         print(f"Precision: {metrics['precision']:.4f}")
         print(f"Recall: {metrics['recall']:.4f}")
-        print(f"{'='*50}")
-        output_file = Path("/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/src/results.json")
+        print(f"{'=' * 50}")
+        output_file = Path(
+            "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/qwen2_vl_zero_shot_results.json")
         with open(output_file, 'w') as f:
             json.dump({
                 "mean_iou": float(metrics['mean_iou']),
@@ -263,5 +274,7 @@ Where coordinates are in pixels relative to the image dimensions."""
         print(f"Detailed results saved to: {output_file}")
     else:
         print("No results to report")
+
+
 if __name__ == "__main__":
     main()
