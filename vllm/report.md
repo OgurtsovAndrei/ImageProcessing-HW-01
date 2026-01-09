@@ -83,9 +83,10 @@
 |-------|-------------------|----------------------------------|
 | YOLOv8n | 0.0438            | 0.9163                           |
 | Qwen2-VL-2B | 0.0269            | 0.0477                           |
+| Gemini 3 Flash | 0.1130            | N/A                              |
 
-The comparison clearly shows that while the VLM has some general understanding of the objects (Mean IoU ~0.24 in zero-shot), it struggles with the precision required for object detection as measured by mAP@0.5, especially when compared to a specialized detector like YOLOv8n. Even with fine-tuning, the VLM's detection performance improves slowly, whereas YOLOv8n quickly reaches high accuracy with minimal data.
+The comparison clearly shows that while models have some general understanding of the objects in zero-shot mode, they struggle with precision. Gemini 3 Flash performs best among zero-shot models. Specialized detectors like YOLOv8n quickly reach very high accuracy with minimal fine-tuning, vastly outperforming even the best zero-shot VLMs or fine-tuned smaller VLMs.
 
-The final plots visualize these trends:
+The final plots visualize these trends, including baseline zero-shot performance for all models:
 ![mAP@0.5 Comparison](plots/results_plot.png)
 ![Mean IoU Comparison](plots/results_iou_plot.png)
