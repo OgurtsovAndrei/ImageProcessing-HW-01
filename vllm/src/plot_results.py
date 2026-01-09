@@ -6,14 +6,15 @@ from pathlib import Path
 
 def main():
     yolo_file = Path(
-        "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/yolo_progressive_results.txt")
+        "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/yolo_iou_results.txt")
     yolo_data = pd.read_csv(yolo_file, sep="\t")
+    yolo_data = yolo_data[yolo_data['Size'] > 0]
     vlm_file = Path(
         "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/qwen2_vl_fine_tune_results.txt")
     vlm_data = pd.read_csv(vlm_file, sep="\t")
-    zero_shot_vlm_map50 = 0.0269
-    gemini_zero_shot_map50 = 0.1130
-    zero_shot_yolo_map50 = 0.0438
+    zero_shot_vlm_map50 = 0.2826
+    gemini_zero_shot_map50 = 0.7999
+    zero_shot_yolo_map50 = 0.4385
     plt.figure(figsize=(10, 6))
     plt.plot(yolo_data['Size'], yolo_data['mAP@0.5'], marker='o', label='Specialized Detector (YOLOv8n)')
     plt.plot(vlm_data['Size'], vlm_data['mAP@0.5'], marker='s', label='Fine-tuned VLM (Qwen2-VL-2B)')

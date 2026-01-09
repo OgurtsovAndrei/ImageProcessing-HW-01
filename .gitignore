@@ -1891,5 +1891,7 @@ dmypy.json
 /covid-segmantation/Unet_efficientnet_b2_mIoU-0.658.pt
 /lora/data/
 vllm/src/vllm_training/
+vllm/src/vlm_training/
 vllm/src/runs/
 vllm/src/yolov8n.pt
+/vllm/src/vlm_training/

@@ -23,11 +23,22 @@ def train_one_epoch(model, processor, train_files, train_labels_dir, optimizer, 
     for img_path in tqdm(train_files, desc="Training", leave=False):
         try:
             image = Image.open(img_path).convert("RGB")
-            w, h = image.size
+            # Using 1000-scale coordinates for training
             boxes = load_yolo_annotation(train_labels_dir / (img_path.stem + ".txt"))
-            obj_list = [{"name": "macbook",
-                         "bbox": [int((b[0] - b[2] / 2) * w), int((b[1] - b[3] / 2) * h), int((b[0] + b[2] / 2) * w),
-                                  int((b[1] + b[3] / 2) * h)]} for b in boxes]
+            obj_list = []
+            for b in boxes:
+                # b is [x_c, y_c, w, h] normalized 0-1
+                x1 = int((b[0] - b[2] / 2) * 1000)
+                y1 = int((b[1] - b[3] / 2) * 1000)
+                x2 = int((b[0] + b[2] / 2) * 1000)
+                y2 = int((b[1] + b[3] / 2) * 1000)
+                # Clamp to 0-1000
+                x1 = max(0, min(1000, x1))
+                y1 = max(0, min(1000, y1))
+                x2 = max(0, min(1000, x2))
+                y2 = max(0, min(1000, y2))
+                obj_list.append({"name": "macbook", "bbox": [x1, y1, x2, y2], "confidence": 1.0})
+            
             target_text = json.dumps({"objects": obj_list})
             messages = [
                 {"role": "user", "content": [{"type": "image", "image": image}, {"type": "text", "text": prompt}]},
@@ -64,9 +75,20 @@ def validate(model, processor, val_files, val_labels_dir, device, prompt):
             w, h = image.size
             gt_boxes = load_yolo_annotation(val_labels_dir / (img_path.stem + ".txt"))
             all_gt_boxes.append(gt_boxes)
-            obj_list = [{"name": "macbook",
-                         "bbox": [int((b[0] - b[2] / 2) * w), int((b[1] - b[3] / 2) * h), int((b[0] + b[2] / 2) * w),
-                                  int((b[1] + b[3] / 2) * h)]} for b in gt_boxes]
+            
+            # Prepare target for loss calculation (using 1000-scale)
+            obj_list = []
+            for b in gt_boxes:
+                x1 = int((b[0] - b[2] / 2) * 1000)
+                y1 = int((b[1] - b[3] / 2) * 1000)
+                x2 = int((b[0] + b[2] / 2) * 1000)
+                y2 = int((b[1] + b[3] / 2) * 1000)
+                x1 = max(0, min(1000, x1))
+                y1 = max(0, min(1000, y1))
+                x2 = max(0, min(1000, x2))
+                y2 = max(0, min(1000, y2))
+                obj_list.append({"name": "macbook", "bbox": [x1, y1, x2, y2], "confidence": 1.0})
+                
             target_text = json.dumps({"objects": obj_list})
             messages_train = [
                 {"role": "user", "content": [{"type": "image", "image": image}, {"type": "text", "text": prompt}]},
@@ -90,7 +112,7 @@ def validate(model, processor, val_files, val_labels_dir, device, prompt):
                 output_text = \
                 processor.batch_decode([g[len(i):] for i, g in zip(inputs_eval["input_ids"], generated_ids)],
                                        skip_special_tokens=True)[0]
-                all_pred_boxes.append(parse_model_output(output_text, w, h))
+                all_pred_boxes.append(parse_model_output(output_text, w, h, target_scale=1000))
             del inputs_train, inputs_eval, labels, image_inputs
         except Exception as e:
             print(f"Error in validation step: {e}")
@@ -110,16 +132,18 @@ def main():
     test_labels_dir = Path(data_root) / "test" / "labels"
     val_images_dir = Path(data_root) / "valid" / "images"
     val_labels_dir = Path(data_root) / "valid" / "labels"
-    subset_sizes = [2, 4, 8, 16, 32, 64, 128, 256]
+    subset_sizes = [2, 4, 8, 16, 32, 64, 128, 256, 512]
     prompt = """Detect all MacBook laptops (Apple laptops) in this image. 
-Please provide the bounding box coordinates in JSON format:
+Please provide the bounding box coordinates and confidence score (0 to 1) in JSON format:
 {
   "objects": [
-    {"name": "macbook", "bbox": [x_min, y_min, x_max, y_max]}
+    {"name": "macbook", "bbox": [x_min, y_min, x_max, y_max], "confidence": score}
   ]
-}"""
+}
+Where coordinates are normalized to [0, 1000] scale (i.e. top-left is [0, 0] and bottom-right is [1000, 1000]).
+"""
     results = []
-    num_epochs = 3
+    num_epochs = 5
     test_files = sorted(list(test_images_dir.glob("*.jpg")))
     val_files = sorted(list(val_images_dir.glob("*.jpg")))
     results_file_path = "/Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/results/qwen2_vl_fine_tune_results.txt"

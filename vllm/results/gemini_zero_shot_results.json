@@ -1,10 +1,17 @@
 {
-  "mean_iou": 0.41401457679351145,
-  "map50": 0.11296106557377049,
-  "precision": 0.328125,
-  "recall": 0.3442622950819672,
-  "num_images": 50,
+  "mean_iou": 0.6472315383062124,
+  "map50": 0.799934882409202,
+  "precision": 0.7941176470588235,
+  "recall": 0.8852459016393442,
+  "num_images": 100,
   "detailed_results": [
+    {
+      "image": "0_png.rf.fc478e8890232362666f2aef32318a1e.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
     {
       "image": "104_png.rf.ef4466dfb969f545e550b2463e135d26.jpg",
       "ground_truth": [
@@ -17,13 +24,14 @@
       ],
       "predictions": [
         [
-          0.83,
-          1.0981524249422632,
-          1.34,
-          1.789838337182448
+          0.4745,
+          0.499,
+          0.773,
+          0.804,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [96, 88, 900, 863]}\n  ]\n}\n```",
+      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [88, 97, 861, 901], \"confidence\": 0.99}\n  ]\n}",
       "success": true
     },
     {
@@ -38,13 +46,106 @@
       ],
       "predictions": [
         [
-          0.271484375,
-          0.6916666666666667,
-          0.36953125,
-          0.8166666666666668
+          0.3485,
+          0.4985,
+          0.469,
+          0.5850000000000001,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [111, 204, 584, 792]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [114, 206, 583, 791],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "1073_png.rf.7bdc69f39eae5d67626a2709eadd2e26.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
+    {
+      "image": "1079_png.rf.e4cb728f3e01c8b4de978ff771d0f0c6.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
+    {
+      "image": "1083_png.rf.a008254237270be18fa8ecfd10addd11.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\n  \"objects\": []\n}",
+      "success": true
+    },
+    {
+      "image": "1099_png.rf.b77daeaec4c42af8dd209b2d98371b2a.jpg",
+      "ground_truth": [],
+      "predictions": [
+        [
+          0.478,
+          0.499,
+          0.6120000000000001,
+          0.488,
+          0.98
+        ]
+      ],
+      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [172, 255, 784, 743], \"confidence\": 0.98}\n  ]\n}",
+      "success": true
+    },
+    {
+      "image": "1123_png.rf.b94b17773f5a32ac531222fa4c87a0f9.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "1174_png.rf.475bcf6f12d3724766568d79a9630897.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
+    {
+      "image": "1191_png.rf.125d3fa62881951329a48113f677db84.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
+    {
+      "image": "1199_png.rf.e48facb6d386443036c42d8a10390d17.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "119_png.rf.bcb2fcb9f85389aedd517001e50da074.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\n  \"objects\": []\n}",
+      "success": true
+    },
+    {
+      "image": "1227_png.rf.0e9732282bcdfe391cd96b6dfcae68e6.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "1246_png.rf.fb53b422a9a312574e28f7cffacdd6da.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\n  \"objects\": []\n}",
+      "success": true
+    },
+    {
+      "image": "1247_png.rf.af97b215cf6b5b9c0840a6dafe51d64f.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -59,13 +160,35 @@
       ],
       "predictions": [
         [
-          0.46416666666666667,
-          0.48050974512743627,
-          0.5499999999999999,
-          0.8920539730134933
+          0.5075,
+          0.558,
+          0.961,
+          0.658,
+          0.95
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [227, 23, 887, 618]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [27, 229, 988, 887], \"confidence\": 0.95}\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "1306_png.rf.17e758395256c1a1f113bd268ea8e9ba.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "1309_png.rf.744c51f30d9b820b65a8e0201777c261.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "134_png.rf.7d934ab33a22502b2cbce04980b354d7.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -80,13 +203,35 @@
       ],
       "predictions": [
         [
-          0.42541666666666667,
-          0.5494444444444444,
-          0.7508333333333332,
-          0.8411111111111111
+          0.512,
+          0.4935,
+          0.8979999999999999,
+          0.753,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [60, 116, 961, 873]}\n  ]\n}\n```",
+      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [63, 117, 961, 870], \"confidence\": 0.99}\n  ]\n}",
+      "success": true
+    },
+    {
+      "image": "1370_png.rf.4696bd2676cbbc9cec5f987d664fdf6a.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
+    {
+      "image": "149_png.rf.8316d3b3081426c6ce7cfb3336f8a886.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "151_png.rf.88ebd05f4aeca43bcd1feb4d2a17682c.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
       "success": true
     },
     {
@@ -119,31 +264,42 @@
       ],
       "predictions": [
         [
-          0.07980535279805352,
-          0.8832271762208068,
-          0.15961070559610704,
-          0.35244161358811044
+          0.3905,
+          0.4275,
+          0.3370000000000001,
+          0.6970000000000001,
+          0.99
         ],
         [
-          0.18953771289537713,
-          0.4559447983014862,
-          0.16301703163017034,
-          0.7399150743099788
+          0.1645,
+          0.833,
+          0.329,
+          0.33199999999999996,
+          0.98
         ],
         [
-          0.29878345498783454,
-          0.29830148619957536,
-          0.16253041362530415,
-          0.5966029723991507
+          0.613,
+          0.283,
+          0.334,
+          0.5619999999999999,
+          0.99
         ],
         [
-          0.4328467153284672,
-          0.18365180467091294,
-          0.1075425790754258,
-          0.3673036093418259
+          0.889,
+          0.1755,
+          0.22199999999999998,
+          0.347,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [0, 666, 328, 998]},\n    {\"name\": \"macbook\", \"bbox\": [222, 81, 557, 778]},\n    {\"name\": \"macbook\", \"bbox\": [447, 0, 781, 562]},\n    {\"name\": \"macbook\", \"bbox\": [779, 0, 1000, 346]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [222, 79, 559, 776],\n      \"confidence\": 0.99\n    },\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [0, 667, 329, 999],\n      \"confidence\": 0.98\n    },\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [446, 2, 780, 564],\n      \"confidence\": 0.99\n    },\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [778, 2, 1000, 349],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "159_png.rf.95dc76fc0ce732dca7582b5b74b67ee6.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -158,13 +314,14 @@
       ],
       "predictions": [
         [
-          0.40625,
-          0.6632791327913279,
-          0.5762195121951219,
-          1.2154471544715446
+          0.492,
+          0.532,
+          0.9019999999999999,
+          0.758,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [155, 41, 911, 938]}\n  ]\n}\n```",
+      "output_text": "{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [41, 153, 943, 911],\n      \"confidence\": 0.99\n    }\n  ]\n}",
       "success": true
     },
     {
@@ -179,13 +336,14 @@
       ],
       "predictions": [
         [
-          0.49853515625,
-          0.6075129533678757,
-          0.7373046875,
-          0.9689119170984457
+          0.4695,
+          0.509,
+          0.747,
+          0.758,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [133, 95, 888, 843]}\n  ]\n}\n```",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [96, 130, 843, 888], \"confidence\": 0.99}]}",
       "success": true
     },
     {
@@ -200,13 +358,14 @@
       ],
       "predictions": [
         [
-          0.999,
-          1.0239583333333335,
-          1.942,
-          1.9770833333333335
+          0.498,
+          0.5,
+          0.96,
+          0.98,
+          0.99
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [14, 17, 985, 966]}]}",
+      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [18, 10, 978, 990], \"confidence\": 0.99}\n  ]\n}",
       "success": true
     },
     {
@@ -221,13 +380,14 @@
       ],
       "predictions": [
         [
-          0.27749999999999997,
-          0.27666666666666667,
-          0.5127777777777778,
-          0.2711111111111111
+          0.499,
+          0.4975,
+          0.9239999999999999,
+          0.485,
+          0.99
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [38, 254, 961, 742]}]}",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [37, 255, 961, 740], \"confidence\": 0.99}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -242,13 +402,21 @@
       ],
       "predictions": [
         [
-          0.7142857142857143,
-          0.6085714285714285,
-          0.72,
-          0.4142857142857143
+          0.5,
+          0.426,
+          0.506,
+          0.2899999999999999,
+          0.98
+        ],
+        [
+          0.44,
+          0.9415,
+          0.08399999999999996,
+          0.06099999999999994,
+          0.9
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [248, 281, 752, 571]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [247, 281, 753, 571], \"confidence\": 0.98},\n    {\"name\": \"macbook\", \"bbox\": [398, 911, 482, 972], \"confidence\": 0.90}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -269,19 +437,35 @@
       ],
       "predictions": [
         [
-          0.59609375,
-          0.9013888888888889,
-          0.12968749999999996,
-          0.3222222222222222
+          0.7635000000000001,
+          0.648,
+          0.16699999999999993,
+          0.23399999999999999,
+          0.98
         ],
         [
-          0.709375,
-          0.8854166666666667,
-          0.09375,
-          0.2236111111111111
+          0.907,
+          0.636,
+          0.118,
+          0.15999999999999992,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [680, 533, 846, 765]},\n    {\"name\": \"macbook\", \"bbox\": [848, 557, 968, 718]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [680, 531, 847, 765],\n      \"confidence\": 0.98\n    },\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [848, 556, 966, 716],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "201_png.rf.36b636c178dd21529e16d22b45eb4fc8.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "217_png.rf.0b8754986417b933e897052e009e2aa0.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -296,19 +480,21 @@
       ],
       "predictions": [
         [
-          0.29541666666666666,
-          0.72,
-          0.49416666666666664,
-          0.6707692307692308
+          0.468,
+          0.354,
+          0.43600000000000005,
+          0.5900000000000001,
+          0.99
         ],
         [
-          0.6154166666666667,
-          0.7569230769230769,
-          0.33916666666666667,
-          0.5969230769230769
+          0.49249999999999994,
+          0.737,
+          0.39099999999999996,
+          0.4099999999999999,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [58, 250, 651, 686]},\n    {\"name\": \"macbook\", \"bbox\": [535, 298, 942, 686]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [250, 59, 686, 649],\n      \"confidence\": 0.99\n    },\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [297, 532, 688, 942],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -329,19 +515,21 @@
       ],
       "predictions": [
         [
-          0.209765625,
-          0.9020833333333333,
-          0.28984374999999996,
-          0.7180555555555556
+          0.269,
+          0.6505000000000001,
+          0.372,
+          0.521,
+          0.99
         ],
         [
-          0.55625,
-          0.8687499999999999,
-          0.32968749999999997,
-          0.8097222222222221
+          0.7115,
+          0.6265000000000001,
+          0.42100000000000004,
+          0.583,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [83, 391, 454, 908]},\n    {\"name\": \"macbook\", \"bbox\": [501, 334, 923, 917]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [83, 390, 455, 911], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [501, 335, 922, 918], \"confidence\": 0.99}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -356,13 +544,14 @@
       ],
       "predictions": [
         [
-          0.125,
-          0.1650390625,
-          0.16699999999999998,
-          0.19986979166666663
+          0.5,
+          0.507,
+          0.6659999999999999,
+          0.6139999999999999,
+          1.0
         ]
       ],
-      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [166, 200, 834, 814]}\n  ]\n}",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [167, 200, 833, 814],\n      \"confidence\": 1.0\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -377,13 +566,14 @@
       ],
       "predictions": [
         [
-          0.1285934291581109,
-          0.19329996149403159,
-          0.24229979466119098,
-          0.3588756257219869
+          0.5,
+          0.5,
+          0.942,
+          0.9299999999999999,
+          1.0
         ]
       ],
-      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [29, 36, 973, 968]}\n  ]\n}",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [29, 35, 971, 965], \"confidence\": 1.0}]}",
       "success": true
     },
     {
@@ -398,13 +588,14 @@
       ],
       "predictions": [
         [
-          0.493,
-          0.511,
-          0.6839999999999999,
-          0.45999999999999996
+          0.4925,
+          0.5105,
+          0.6829999999999999,
+          0.46099999999999997,
+          0.98
         ]
       ],
-      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [151, 281, 835, 741]}\n  ]\n}",
+      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [151, 280, 834, 741], \"confidence\": 0.98}\n  ]\n}",
       "success": true
     },
     {
@@ -419,13 +610,14 @@
       ],
       "predictions": [
         [
-          0.495,
-          0.49888888888888894,
-          0.9366666666666668,
-          0.44
+          0.4945,
+          0.486,
+          0.939,
+          0.46599999999999997,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [24, 251, 867, 647]}\n  ]\n}\n```",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [25, 253, 964, 719], \"confidence\": 0.98}]}",
       "success": true
     },
     {
@@ -440,13 +632,29 @@
       ],
       "predictions": [
         [
-          0.8391666666666667,
-          0.8916666666666667,
-          1.6316666666666666,
-          1.4566666666666668
+          0.505,
+          0.533,
+          0.984,
+          0.87,
+          0.99
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [14, 98, 993, 972]}]}",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [13, 98, 997, 968],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "259_png.rf.6231805258555dc403bd56bd58a5037f.jpg",
+      "ground_truth": [],
+      "predictions": [
+        [
+          0.6135,
+          0.687,
+          0.38300000000000006,
+          0.2919999999999999,
+          0.95
+        ]
+      ],
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [422, 541, 805, 833],\n      \"confidence\": 0.95\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -461,13 +669,14 @@
       ],
       "predictions": [
         [
-          0.24825,
-          0.419953596287703,
-          0.3455,
-          0.6326372776488787
+          0.4825,
+          0.5449999999999999,
+          0.6649999999999999,
+          0.814,
+          0.992
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [151, 134, 842, 952]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [150, 138, 815, 952],\n      \"confidence\": 0.992\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -482,13 +691,14 @@
       ],
       "predictions": [
         [
-          0.24505208333333334,
-          0.4462962962962963,
-          0.2567708333333333,
-          0.6944444444444444
+          0.481,
+          0.4695,
+          0.75,
+          0.491,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [224, 107, 717, 857]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [106, 224, 856, 715],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -496,13 +706,14 @@
       "ground_truth": [],
       "predictions": [
         [
-          0.46875,
-          0.46959165942658554,
-          0.8388671875,
-          0.8175499565595135
+          0.5,
+          0.5,
+          0.798,
+          0.8580000000000001,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [101, 70, 1819, 1011]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [101, 71, 899, 929],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -517,13 +728,14 @@
       ],
       "predictions": [
         [
-          0.4233226837060703,
-          1.1301916932907348,
-          0.5335463258785942,
-          0.3306709265175719
+          0.2685,
+          0.708,
+          0.34099999999999997,
+          0.20800000000000007,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [98, 604, 432, 811]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [98, 604, 439, 812],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -538,13 +750,14 @@
       ],
       "predictions": [
         [
-          0.2629901960784314,
-          0.45882352941176474,
-          0.40147058823529413,
-          0.39558823529411763
+          0.621,
+          0.5365,
+          0.534,
+          0.817,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [127, 355, 946, 893]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [354, 128, 888, 945], \"confidence\": 0.98}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -559,13 +772,21 @@
       ],
       "predictions": [
         [
-          0.309375,
-          0.5354166666666667,
-          0.61875,
-          0.9291666666666667
+          0.3935,
+          0.534,
+          0.787,
+          0.9319999999999999,
+          0.999
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [0, 68, 792, 960]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [0, 68, 787, 1000], \"confidence\": 0.999}\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "305_png.rf.d255db75e3de3f25f4e0f4f1325f23a2.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
       "success": true
     },
     {
@@ -580,13 +801,21 @@
       ],
       "predictions": [
         [
-          0.6067961165048543,
-          0.61625,
-          1.0388349514563107,
-          1.0550000000000002
+          0.5,
+          0.494,
+          0.8540000000000001,
+          0.8460000000000001,
+          0.998
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [72, 71, 928, 915]}\n  ]\n}\n```",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [73, 71, 927, 917], \"confidence\": 0.998}]}",
+      "success": true
+    },
+    {
+      "image": "310_png.rf.763ae6aa69fec38ed9287bd32526e522.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -644,54 +873,62 @@
       "predictions": [
         [
           0.1215,
-          0.19687500000000002,
+          0.194,
           0.23299999999999998,
-          0.28125
+          0.28200000000000003,
+          0.99
         ],
         [
           0.3725,
-          0.19687500000000002,
+          0.194,
           0.23299999999999998,
-          0.28125
+          0.28200000000000003,
+          0.99
         ],
         [
           0.6245,
-          0.19687500000000002,
+          0.194,
           0.23299999999999998,
-          0.28125
+          0.28200000000000003,
+          0.99
         ],
         [
           0.8755,
-          0.19687500000000002,
+          0.194,
           0.23299999999999998,
-          0.28125
+          0.28200000000000003,
+          0.99
         ],
         [
-          0.119,
-          0.575,
+          0.1195,
+          0.5715,
+          0.195,
+          0.28099999999999997,
+          0.99
+        ],
+        [
+          0.371,
+          0.5715,
           0.194,
-          0.2833333333333333
+          0.28099999999999997,
+          0.99
         ],
         [
-          0.37,
-          0.575,
-          0.194,
-          0.2833333333333333
+          0.6234999999999999,
+          0.5715,
+          0.19499999999999995,
+          0.28099999999999997,
+          0.99
         ],
         [
-          0.621,
-          0.575,
+          0.875,
+          0.5715,
           0.19399999999999995,
-          0.2833333333333333
-        ],
-        [
-          0.873,
-          0.575,
-          0.19399999999999995,
-          0.2833333333333333
+          0.28099999999999997,
+          0.99
         ]
       ],
-      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [5, 27, 238, 162]},\n    {\"name\": \"macbook\", \"bbox\": [256, 27, 489, 162]},\n    {\"name\": \"macbook\", \"bbox\": [508, 27, 741, 162]},\n    {\"name\": \"macbook\", \"bbox\": [759, 27, 992, 162]},\n    {\"name\": \"macbook\", \"bbox\": [22, 208, 216, 344]},\n    {\"name\": \"macbook\", \"bbox\": [273, 208, 467, 344]},\n    {\"name\": \"macbook\", \"bbox\": [524, 208, 718, 344]},\n    {\"name\": \"macbook\", \"bbox\": [776, 208, 970, 344]}\n  ]\n}",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [5, 53, 238, 335], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [256, 53, 489, 335], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [508, 53, 741, 335], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [759, 53, 992, 335], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [22, 431, 217, 712], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [274, 431, 468, 712], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [526, 431, 721, 712], \"confidence\": 0.99},\n    {\"name\": \"macbook\", \"bbox\": [778, 431, 972, 712], \"confidence\": 0.99}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -706,13 +943,28 @@
       ],
       "predictions": [
         [
-          0.5102040816326531,
-          0.5290381125226861,
-          0.8285714285714285,
-          0.8294010889292196
+          0.5005,
+          0.4995,
+          0.877,
+          0.8130000000000001,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [94, 63, 906, 520]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [62, 93, 939, 906],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "362_png.rf.46004b6f74ed19c332a0b4a62e928fd1.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "377_png.rf.f80f6aa20c2b3acb4c7fc0be8e3cea76.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -727,13 +979,21 @@
       ],
       "predictions": [
         [
-          0.44804687499999996,
-          0.7104166666666667,
-          0.50703125,
-          1.2152777777777777
+          0.5115,
+          0.573,
+          0.875,
+          0.65,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [249, 74, 898, 949]}\n  ]\n}\n```",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [74, 248, 949, 898], \"confidence\": 0.99}]}",
+      "success": true
+    },
+    {
+      "image": "384_png.rf.0ec4560b49bb3bc7e9a7bdf49a874653.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -748,13 +1008,14 @@
       ],
       "predictions": [
         [
-          0.19979166666666665,
-          0.372787610619469,
-          0.2045833333333333,
-          0.5405604719764011
+          0.479,
+          0.5055000000000001,
+          0.49,
+          0.735,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [234, 139, 725, 872]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [234, 138, 724, 873],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -769,13 +1030,14 @@
       ],
       "predictions": [
         [
-          0.24725,
-          0.44755555555555554,
-          0.41150000000000003,
-          0.84
+          0.5005,
+          0.494,
+          0.943,
+          0.8240000000000001,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [83, 31, 906, 976]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [29, 82, 972, 906], \"confidence\": 0.99}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -790,13 +1052,14 @@
       ],
       "predictions": [
         [
-          0.41708333333333336,
-          0.41750000000000004,
-          0.8325,
-          0.505
+          0.5,
+          0.501,
+          1.0,
+          0.6040000000000001,
+          0.98
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [1, 198, 1000, 804]}]}",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [0, 199, 1000, 803], \"confidence\": 0.98}]}",
       "success": true
     },
     {
@@ -811,13 +1074,14 @@
       ],
       "predictions": [
         [
-          0.25390625,
-          0.37216117216117217,
-          0.353515625,
-          0.6476190476190475
+          0.507,
+          0.519,
+          0.8819999999999999,
+          0.724,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [158, 66, 882, 950]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [66, 157, 948, 881],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -838,19 +1102,21 @@
       ],
       "predictions": [
         [
-          0.2265625,
-          0.7256944444444444,
-          0.31562500000000004,
-          0.6708333333333334
+          0.2905,
+          0.523,
+          0.405,
+          0.486,
+          0.99
         ],
         [
-          0.55,
-          0.7076388888888889,
-          0.30781249999999993,
-          0.651388888888889
+          0.7045,
+          0.511,
+          0.393,
+          0.46799999999999997,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [88, 281, 492, 764]},\n    {\"name\": \"macbook\", \"bbox\": [507, 275, 901, 744]}\n  ]\n}\n```",
+      "output_text": "{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [88, 280, 493, 766],\n      \"confidence\": 0.99\n    },\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [508, 277, 901, 745],\n      \"confidence\": 0.99\n    }\n  ]\n}",
       "success": true
     },
     {
@@ -858,13 +1124,21 @@
       "ground_truth": [],
       "predictions": [
         [
-          0.1996,
-          0.2,
-          0.248,
-          0.4
+          0.5,
+          0.4995,
+          0.6200000000000001,
+          0.993,
+          0.99
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [189, 0, 809, 1000]}]}",
+      "output_text": "{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [190, 3, 810, 996],\n      \"confidence\": 0.99\n    }\n  ]\n}",
+      "success": true
+    },
+    {
+      "image": "42_png.rf.feef125be32b156a7e9e66eaa348b4d4.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -872,13 +1146,14 @@
       "ground_truth": [],
       "predictions": [
         [
-          0.3921875,
-          0.388671875,
-          0.76875,
-          0.76484375
+          0.5015,
+          0.496,
+          0.983,
+          0.976,
+          0.98
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [10, 8, 994, 987]}]}",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [10, 8, 993, 984], \"confidence\": 0.98}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -893,13 +1168,14 @@
       ],
       "predictions": [
         [
-          0.32125,
-          0.2683093771389459,
-          0.5912499999999999,
-          0.46680355920602323
+          0.392,
+          0.512,
+          0.6859999999999999,
+          0.952,
+          1.0
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [41, 51, 987, 733]}\n  ]\n}\n```",
+      "output_text": "{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [49, 36, 735, 988],\n      \"confidence\": 1.0\n    }\n  ]\n}",
       "success": true
     },
     {
@@ -914,13 +1190,21 @@
       ],
       "predictions": [
         [
-          0.390625,
-          0.2421875,
-          0.43906249999999997,
-          0.30937499999999996
+          0.5,
+          0.31,
+          0.562,
+          0.396,
+          1.0
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [219, 112, 781, 508]}\n  ]\n}\n```",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [219, 112, 781, 508], \"confidence\": 1.0}]}",
+      "success": true
+    },
+    {
+      "image": "456_png.rf.82ab9ed72c36b93c2858cb49be086741.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -941,13 +1225,14 @@
       ],
       "predictions": [
         [
-          0.12968749999999998,
-          0.2310185185185185,
-          0.21354166666666666,
-          0.3222222222222222
+          0.5,
+          0.499,
+          0.694,
+          0.8220000000000001,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [88, 151, 908, 847]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [153, 88, 847, 910],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -962,13 +1247,14 @@
       ],
       "predictions": [
         [
+          0.514,
           0.508,
-          0.5145000000000001,
-          0.8400000000000001,
-          0.803
+          0.802,
+          0.8380000000000001,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [88, 113, 928, 916]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [113, 89, 915, 927],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -983,13 +1269,14 @@
       ],
       "predictions": [
         [
-          0.6383561643835617,
-          0.8987226277372263,
-          1.082191780821918,
-          1.5237226277372262
+          0.4675,
+          0.493,
+          0.7949999999999999,
+          0.8360000000000001,
+          0.98
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [71, 75, 861, 910]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [70, 75, 865, 911],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -1004,13 +1291,14 @@
       ],
       "predictions": [
         [
-          0.7635782747603834,
-          0.8937699680511182,
-          1.1246006389776357,
-          0.8546325878594248
+          0.481,
+          0.5605,
+          0.71,
+          0.5369999999999999,
+          0.98
         ]
       ],
-      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [126, 292, 830, 827]}\n  ]\n}",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [126, 292, 836, 829],\n      \"confidence\": 0.98\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -1025,13 +1313,14 @@
       ],
       "predictions": [
         [
-          0.183984375,
-          0.1072048611111111,
-          0.15286458333333336,
-          0.05295138888888888
+          0.7045,
+          0.6175,
+          0.587,
+          0.305,
+          0.99
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [413, 465, 1000, 770]}]}",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [411, 465, 998, 770],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -1046,13 +1335,14 @@
       ],
       "predictions": [
         [
-          0.41239316239316237,
-          0.7579972183588317,
-          0.6726495726495727,
-          0.9707927677329624
+          0.4815,
+          0.5455,
+          0.785,
+          0.6990000000000001,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [89, 196, 876, 894]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [89, 196, 874, 895],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
       "success": true
     },
     {
@@ -1067,13 +1357,49 @@
       ],
       "predictions": [
         [
-          0.14484126984126985,
-          0.2649874055415617,
-          0.18310657596371882,
-          0.4080604534005038
+          0.528,
+          0.5105,
+          0.81,
+          0.645,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [188, 121, 834, 931]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [123, 188, 933, 833],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "555_png.rf.ce83685886f778652bf1178f7467279d.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "566_png.rf.cb33a0a7cad788c96113d50a23153f50.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "577_png.rf.c843b04794922de564cd30f37fe9c497.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
+    {
+      "image": "603_png.rf.d00aad0d5034fd5313080c04246fe66a.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "617_png.rf.60172869a74220dff11d342d465c3f39.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -1088,13 +1414,35 @@
       ],
       "predictions": [
         [
-          0.9990000000000001,
-          1.3080939947780679,
-          1.726,
-          1.7702349869451695
+          0.49950000000000006,
+          0.501,
+          0.859,
+          0.6779999999999999,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [68, 162, 931, 840]}\n  ]\n}\n```",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [70, 162, 929, 840], \"confidence\": 0.99}]}",
+      "success": true
+    },
+    {
+      "image": "620_png.rf.9f139a305d24eb139149300e4ee0b079.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "625_png.rf.32bffc480862d12fd4a8955e3892a276.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "63_png.rf.5eba71952e50fc1124158e9ebb727ae8.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -1109,13 +1457,21 @@
       ],
       "predictions": [
         [
-          1.1627906976744187,
-          1.158139534883721,
-          2.3255813953488373,
-          1.3348837209302324
+          0.498,
+          0.5,
+          0.5740000000000001,
+          0.998,
+          0.99
         ]
       ],
-      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [0, 211, 1000, 785]}]}",
+      "output_text": "{\"objects\": [{\"name\": \"macbook\", \"bbox\": [211, 1, 785, 999], \"confidence\": 0.99}]}",
+      "success": true
+    },
+    {
+      "image": "727_png.rf.6db112d6a3998c40d88ac87136c71888.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
       "success": true
     },
     {
@@ -1130,13 +1486,42 @@
       ],
       "predictions": [
         [
-          0.5587248322147651,
-          0.8006430868167203,
-          0.9272930648769574,
-          1.2090032154340835
+          0.5,
+          0.498,
+          0.8260000000000001,
+          0.752,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [85, 122, 914, 874]}\n  ]\n}\n```",
+      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [87, 122, 913, 874], \"confidence\": 0.99}\n  ]\n}",
+      "success": true
+    },
+    {
+      "image": "762_png.rf.4f5d6870209d7213a853a9c10cb2b054.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "82_png.rf.16e31993de1addbf8638a3eb0561258b.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "840_png.rf.d9d2881993efaad81d58f948d45ca19b.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "857_png.rf.be7b4383b2028b622650165f4e68b1bc.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
       "success": true
     },
     {
@@ -1151,13 +1536,35 @@
       ],
       "predictions": [
         [
-          0.323,
-          0.522,
-          0.4926666666666667,
-          0.786
+          0.4845,
+          0.524,
+          0.739,
+          0.782,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [115, 129, 854, 915]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [115, 133, 854, 915],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "874_png.rf.1167ee128f71c2d422db32c4011578ae.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "886_png.rf.a90750a9586b4d70f4c09abf219f8487.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "905_png.rf.a959d2a843dc217dd862bd79094b7030.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     },
     {
@@ -1172,13 +1579,29 @@
       ],
       "predictions": [
         [
-          0.30000000000000004,
-          0.26357733175914994,
-          0.4233128834355829,
-          0.36304604486422665
+          0.487,
+          0.4435,
+          0.69,
+          0.609,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [144, 139, 834, 754]}\n  ]\n}\n```",
+      "output_text": "```json\n{\n  \"objects\": [\n    {\n      \"name\": \"macbook\",\n      \"bbox\": [142, 139, 832, 748],\n      \"confidence\": 0.99\n    }\n  ]\n}\n```",
+      "success": true
+    },
+    {
+      "image": "916_png.rf.978f753072cecd180f2fa05a5282f7f1.jpg",
+      "ground_truth": [],
+      "predictions": [
+        [
+          0.3635,
+          0.41900000000000004,
+          0.6589999999999999,
+          0.716,
+          0.99
+        ]
+      ],
+      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [34, 61, 693, 777], \"confidence\": 0.99}\n  ]\n}\n```",
       "success": true
     },
     {
@@ -1193,13 +1616,35 @@
       ],
       "predictions": [
         [
-          0.7142857142857143,
-          0.7668711656441718,
-          1.4285714285714286,
-          1.5337423312883436
+          0.4975,
+          0.5,
+          0.991,
+          1.0,
+          0.99
         ]
       ],
-      "output_text": "```json\n{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [0, 0, 1000, 1000]}\n  ]\n}\n```",
+      "output_text": "{\n  \"objects\": [\n    {\"name\": \"macbook\", \"bbox\": [2, 0, 993, 1000], \"confidence\": 0.99}\n  ]\n}",
+      "success": true
+    },
+    {
+      "image": "937_png.rf.6ecbe9d3d9c70cf2218c765a9fb9f97a.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "```json\n{\n  \"objects\": []\n}\n```",
+      "success": true
+    },
+    {
+      "image": "97_png.rf.1ad90f0a165b607458acbf9d986ad3ae.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
+      "success": true
+    },
+    {
+      "image": "981_png.rf.2fd2ee6956b661f06d2cc4f692a86704.jpg",
+      "ground_truth": [],
+      "predictions": [],
+      "output_text": "{\"objects\": []}",
       "success": true
     }
   ]

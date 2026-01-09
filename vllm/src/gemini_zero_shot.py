@@ -21,7 +21,8 @@ def process_single_image(model, img_path, prompt, test_labels_dir):
         gt_boxes = load_yolo_annotation(label_path)
         response = model.generate_content([prompt, image])
         output_text = response.text
-        pred_boxes = parse_model_output(output_text, img_width, img_height)
+        # Gemini uses 0-1000 scale by default
+        pred_boxes = parse_model_output(output_text, img_width, img_height, target_scale=1000)
         return {
             "image": img_path.name,
             "ground_truth": gt_boxes,
@@ -55,13 +56,13 @@ MacBooks are Apple-branded laptops with distinctive aluminum design and Apple lo
 Do NOT detect other laptop brands like Acer, Asus, Dell, HP, Lenovo, etc.
 Only detect MacBooks.
 
-Please provide the bounding box coordinates in JSON format:
+Please provide the bounding box coordinates and confidence score (0 to 1) in JSON format:
 {
   "objects": [
-    {"name": "macbook", "bbox": [x_min, y_min, x_max, y_max]}
+    {"name": "macbook", "bbox": [x_min, y_min, x_max, y_max], "confidence": score}
   ]
 }
-Where coordinates are in pixels relative to the image dimensions [x_min, y_min, x_max, y_max].
+Where coordinates are normalized to [0, 1000] scale (i.e. top-left is [0, 0] and bottom-right is [1000, 1000]).
 Return ONLY the JSON object."""
     results = []
     max_workers = 32

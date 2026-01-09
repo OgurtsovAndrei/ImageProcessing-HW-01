@@ -49,10 +49,14 @@ def load_yolo_annotation(label_path):
     return boxes
 
 
-def parse_model_output(output_text, img_width, img_height):
+def parse_model_output(output_text, img_width, img_height, target_scale=None):
     """
-    Parse model output to extract bounding boxes.
-    Expected format: JSON with bounding boxes
+    Parse model output to extract bounding boxes and confidence.
+    Expected format: JSON with bounding boxes and confidence
+    
+    target_scale: If set (e.g., 1000), hints that the model should output coordinates in [0, target_scale].
+                  The function will attempt to detect if the output is actually in this scale 
+                  or in pixels (relative to img dimensions) or normalized [0, 1].
     """
     boxes = []
     try:
@@ -61,101 +65,190 @@ def parse_model_output(output_text, img_width, img_height):
         if start_idx != -1 and end_idx != -1:
             json_str = output_text[start_idx:end_idx + 1]
             data = json.loads(json_str)
+            
+            objects = []
             if 'objects' in data:
-                for obj in data['objects']:
-                    if 'bbox' in obj or 'bounding_box' in obj:
-                        bbox = obj.get('bbox', obj.get('bounding_box'))
-                        if isinstance(bbox, list) and len(bbox) == 4:
-                            x1, y1, x2, y2 = bbox
-                            if x2 > 1 or y2 > 1:
-                                x1, y1, x2, y2 = x1 / img_width, y1 / img_height, x2 / img_width, y2 / img_height
-                            x_center = (x1 + x2) / 2
-                            y_center = (y1 + y2) / 2
-                            width = abs(x2 - x1)
-                            height = abs(y2 - y1)
-                            boxes.append([x_center, y_center, width, height])
+                objects = data['objects']
             elif 'bounding_boxes' in data:
-                for bbox in data['bounding_boxes']:
-                    if isinstance(bbox, list) and len(bbox) == 4:
-                        x1, y1, x2, y2 = bbox
-                        if x2 > 1 or y2 > 1:
-                            x1, y1, x2, y2 = x1 / img_width, y1 / img_height, x2 / img_width, y2 / img_height
-                        x_center = (x1 + x2) / 2
-                        y_center = (y1 + y2) / 2
-                        width = abs(x2 - x1)
-                        height = abs(y2 - y1)
-                        boxes.append([x_center, y_center, width, height])
+                objects = data['bounding_boxes']
+                
+            for obj in objects:
+                bbox = None
+                conf = 1.0
+                
+                if isinstance(obj, dict):
+                    bbox = obj.get('bbox', obj.get('bounding_box'))
+                    conf = obj.get('confidence', 1.0)
+                elif isinstance(obj, list) and len(obj) == 4:
+                    # Case where objects is just a list of boxes (less common in our prompts but possible)
+                    bbox = obj
+                
+                if isinstance(bbox, list) and len(bbox) == 4:
+                    x1, y1, x2, y2 = [float(c) for c in bbox]
+                    
+                    # Coordinate normalization logic
+                    is_normalized_0_1 = (x2 <= 1.0 and y2 <= 1.0)
+                    is_target_scale = False
+                    if target_scale:
+                         if (x2 > 1.0 or y2 > 1.0) and (x2 <= target_scale and y2 <= target_scale):
+                             is_target_scale = True
+                    
+                    if is_normalized_0_1:
+                        pass 
+                    elif is_target_scale:
+                        x1, y1, x2, y2 = x1 / target_scale, y1 / target_scale, x2 / target_scale, y2 / target_scale
+                    else:
+                        if target_scale and (x2 <= target_scale and y2 <= target_scale):
+                             x1, y1, x2, y2 = x1 / target_scale, y1 / target_scale, x2 / target_scale, y2 / target_scale
+                        else:
+                             x1, y1, x2, y2 = x1 / img_width, y1 / img_height, x2 / img_width, y2 / img_height
+                             
+                    x_center = (x1 + x2) / 2
+                    y_center = (y1 + y2) / 2
+                    width = abs(x2 - x1)
+                    height = abs(y2 - y1)
+                    boxes.append([x_center, y_center, width, height, conf])
+
         if not boxes:
             import re
             coord_pattern = r'\[(\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)\]'
             matches = re.findall(coord_pattern, output_text)
             for match in matches:
                 x1, y1, x2, y2 = [float(x) for x in match]
-                if x2 > 1 or y2 > 1:
+                
+                if target_scale and (x2 > 1.0 or y2 > 1.0) and (x2 <= target_scale and y2 <= target_scale):
+                    x1, y1, x2, y2 = x1 / target_scale, y1 / target_scale, x2 / target_scale, y2 / target_scale
+                elif x2 <= 1.0 and y2 <= 1.0:
+                    pass
+                else:
                     x1, y1, x2, y2 = x1 / img_width, y1 / img_height, x2 / img_width, y2 / img_height
+                
                 x_center = (x1 + x2) / 2
                 y_center = (y1 + y2) / 2
                 width = abs(x2 - x1)
                 height = abs(y2 - y1)
-                boxes.append([x_center, y_center, width, height])
+                boxes.append([x_center, y_center, width, height, 1.0])
     except Exception as e:
         print(f"Error parsing output: {e}")
     return boxes
 
 
-def evaluate_predictions(all_gt_boxes, all_pred_boxes, iou_threshold=0.5):
+def calculate_ap(recalls, precisions):
+    """Calculate Average Precision using all points interpolation (COCO style)"""
+    mrec = np.concatenate(([0.0], recalls, [1.0]))
+    mpre = np.concatenate(([1.0], precisions, [0.0]))
+    for i in range(mpre.size - 1, 0, -1):
+        mpre[i - 1] = np.maximum(mpre[i - 1], mpre[i])
+    i = np.where(mrec[1:] != mrec[:-1])[0]
+    ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
+    return ap
+
+
+def evaluate_predictions(all_gt_boxes, all_pred_boxes, iou_threshold=0.5, conf_threshold=0.25):
     """
-    Calculate Mean IoU and mAP@0.5.
-    all_gt_boxes: list of lists of boxes [x_center, y_center, width, height] (normalized)
-    all_pred_boxes: list of lists of boxes [x_center, y_center, width, height] (normalized)
+    Calculate Mean IoU and true mAP@0.5.
+    all_gt_boxes: list of lists of boxes [x_center, y_center, width, height]
+    all_pred_boxes: list of lists of boxes [x_center, y_center, width, height, confidence]
     """
     ious = []
-    tp = 0
-    fp = 0
-    fn = 0
+    all_scores = []
+    all_tp_fp = []
+    total_gt = sum(len(gt) for gt in all_gt_boxes)
+
+    # For fixed threshold metrics
+    tp_fixed = 0
+    fp_fixed = 0
+
     for gt_boxes, pred_boxes in zip(all_gt_boxes, all_pred_boxes):
         if not gt_boxes:
-            fp += len(pred_boxes)
+            for p_box in pred_boxes:
+                score = p_box[4] if len(p_box) > 4 else 1.0
+                all_scores.append(score)
+                all_tp_fp.append(0)
+                ious.append(0.0)
+                if score >= conf_threshold:
+                    fp_fixed += 1
             continue
+
         if not pred_boxes:
-            fn += len(gt_boxes)
             for _ in gt_boxes:
                 ious.append(0.0)
             continue
-        for gt_box in gt_boxes:
-            max_iou = 0
-            for pred_box in pred_boxes:
-                iou = calculate_iou(gt_box, pred_box)
-                max_iou = max(max_iou, iou)
-            ious.append(max_iou)
+
+        pred_boxes = sorted(pred_boxes, key=lambda x: x[4] if len(x) > 4 else 1.0, reverse=True)
         matched_gt = [False] * len(gt_boxes)
+        matched_gt_fixed = [False] * len(gt_boxes)
+
         for p_box in pred_boxes:
+            score = p_box[4] if len(p_box) > 4 else 1.0
+            all_scores.append(score)
+
             best_iou = 0
             best_gt_idx = -1
             for g_idx, g_box in enumerate(gt_boxes):
-                if matched_gt[g_idx]: continue
-                iou = calculate_iou(g_box, p_box)
+                iou = calculate_iou(g_box, p_box[:4])
                 if iou > best_iou:
                     best_iou = iou
                     best_gt_idx = g_idx
-            if best_iou >= iou_threshold:
-                tp += 1
+
+            if best_iou >= iou_threshold and not matched_gt[best_gt_idx]:
+                all_tp_fp.append(1)
                 matched_gt[best_gt_idx] = True
+                ious.append(best_iou)
             else:
-                fp += 1
-        fn += len(gt_boxes) - sum(matched_gt)
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    map50 = precision * recall
+                all_tp_fp.append(0)
+                ious.append(0.0)
+
+            # Fixed threshold TP/FP
+            if score >= conf_threshold:
+                if best_iou >= iou_threshold and not matched_gt_fixed[best_gt_idx]:
+                    tp_fixed += 1
+                    matched_gt_fixed[best_gt_idx] = True
+                else:
+                    fp_fixed += 1
+
+        for g_idx, g_box in enumerate(gt_boxes):
+            if not matched_gt[g_idx]:
+                ious.append(0.0)
+
     mean_iou = np.mean(ious) if ious else 0
+
+    if not all_scores:
+        return {
+            "mean_iou": mean_iou, "map50": 0, "tp": 0, "fp": 0, "fn": total_gt,
+            "tp_fixed": 0, "fp_fixed": 0, "fn_fixed": total_gt
+        }
+
+    indices = np.argsort(all_scores)[::-1]
+    all_tp_fp_sorted = np.array(all_tp_fp)[indices]
+
+    tp_cum = np.cumsum(all_tp_fp_sorted)
+    fp_cum = np.cumsum(1 - all_tp_fp_sorted)
+
+    precisions = tp_cum / (tp_cum + fp_cum)
+    recalls = tp_cum / total_gt if total_gt > 0 else np.zeros_like(tp_cum)
+
+    map50 = calculate_ap(recalls, precisions)
+    
+    tp_total = int(np.sum(all_tp_fp))
+    fp_total = int(len(all_tp_fp) - tp_total)
+    fn_total = int(total_gt - tp_total)
+
+    fn_fixed = total_gt - tp_fixed
+
     return {
         "mean_iou": mean_iou,
         "map50": map50,
-        "precision": precision,
-        "recall": recall,
-        "tp": tp,
-        "fp": fp,
-        "fn": fn
+        "tp": tp_total,
+        "fp": fp_total,
+        "fn": fn_total,
+        "tp_fixed": tp_fixed,
+        "fp_fixed": fp_fixed,
+        "fn_fixed": fn_fixed,
+        "precision_fixed": tp_fixed / (tp_fixed + fp_fixed) if (tp_fixed + fp_fixed) > 0 else 0,
+        "recall_fixed": tp_fixed / total_gt if total_gt > 0 else 0,
+        "precision": precisions[-1] if len(precisions) > 0 else 0,
+        "recall": recalls[-1] if len(recalls) > 0 else 0
     }
 
 
@@ -166,7 +259,6 @@ def main():
     test_images_dir = data_root / "test" / "images"
     test_labels_dir = data_root / "test" / "labels"
     test_images = sorted(list(test_images_dir.glob("*.jpg")))
-    test_images = test_images[:50]
     print(f"Using {len(test_images)} images as test set")
     print("Loading Qwen2-VL model...")
     model_name = "Qwen/Qwen2-VL-2B-Instruct"
@@ -192,13 +284,14 @@ MacBooks are Apple-branded laptops with distinctive aluminum design and Apple lo
 Do NOT detect other laptop brands like Acer, Asus, Dell, HP, Lenovo, etc.
 Only detect MacBooks.
 
-Please provide the bounding box coordinates in JSON format:
+Please provide the bounding box coordinates and confidence score (0 to 1) in JSON format:
 {
   "objects": [
-    {"name": "macbook", "bbox": [x_min, y_min, x_max, y_max]}
+    {"name": "macbook", "bbox": [x_min, y_min, x_max, y_max], "confidence": score}
   ]
 }
-Where coordinates are in pixels relative to the image dimensions."""
+Where coordinates are normalized to [0, 1000] scale (i.e. top-left is [0, 0] and bottom-right is [1000, 1000]).
+Return ONLY the JSON object."""
     results = []
     all_gt_boxes = []
     all_pred_boxes = []
@@ -236,7 +329,7 @@ Where coordinates are in pixels relative to the image dimensions."""
             output_text = processor.batch_decode(
                 generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
             )[0]
-            pred_boxes = parse_model_output(output_text, img_width, img_height)
+            pred_boxes = parse_model_output(output_text, img_width, img_height, target_scale=1000)
             all_pred_boxes.append(pred_boxes)
             results.append({
                 "image": img_path.name,

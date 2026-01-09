@@ -17,9 +17,9 @@ def main():
         print(f"Error: {vlm_file} not found.")
         return
     vlm_data = pd.read_csv(vlm_file, sep="\t")
-    zero_shot_vlm_iou = 0.2419
-    gemini_zero_shot_iou = 0.4140
-    zero_shot_yolo_iou = 0.0317
+    zero_shot_vlm_iou = 0.2038
+    gemini_zero_shot_iou = 0.6472
+    zero_shot_yolo_iou = 0.2498
     plt.figure(figsize=(10, 6))
     plt.plot(yolo_curve['Size'], yolo_curve['Mean_IoU'], marker='o', label='Specialized Detector (YOLOv8n)')
     plt.plot(vlm_data['Size'], vlm_data['Mean_IoU'], marker='s', label='Fine-tuned VLM (Qwen2-VL-2B)')
