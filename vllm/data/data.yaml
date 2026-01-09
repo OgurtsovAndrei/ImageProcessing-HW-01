@@ -1,0 +1,13 @@
+train: /Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/data/train/images
+val: /Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/data/valid/images
+test: /Users/andrei.ogurtsov/NUP/ImProc/ImageProcessing-HW-01/vllm/data/test/images
+
+nc: 1
+names: ['0']
+
+roboflow:
+  workspace: nup2025-cv-course
+  project: find-mac2
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/nup2025-cv-course/find-mac2/dataset/1
