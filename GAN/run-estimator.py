@@ -143,7 +143,15 @@ def run_training(epocs=100, iterations=500, batch_size=128, latent_dim=2, hidden
     device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
     print(f"Using device: {device}")
 
-    mog = MoG(weights=[0.75, 0.25], params=[((10, 10), (3, 1.4)), ((0, 0), (1, 2))])
+    weights = [0.2, 0.2, 0.2, 0.2, 0.2]
+    params = [
+        ((10, 10), (1, 1)),
+        ((0, 0), (1, 1)),
+        ((10, 0), (1, 1)),
+        ((0, 10), (1, 1)),
+        ((5, 5), (1, 1))
+    ]
+    mog = MoG(weights=weights, params=params)
 
     dataset = DataLoader(MoGData(mog=mog, size=iterations * batch_size), batch_size=batch_size, shuffle=True)
 
@@ -159,9 +167,10 @@ def run_training(epocs=100, iterations=500, batch_size=128, latent_dim=2, hidden
 
     history = {'d_loss': [], 'g_loss': [], 'epoc': []}
 
-    Path("GAN/outputs").mkdir(exist_ok=True)
+    gan_outputs = 'GAN/outputs5'
+    Path("%s" % gan_outputs).mkdir(exist_ok=True)
 
-    frames_dir = Path("GAN/outputs/frames")
+    frames_dir = Path("%s/frames" % gan_outputs)
     if create_video:
         if frames_dir.exists():
             shutil.rmtree(frames_dir)
@@ -272,16 +281,16 @@ def run_training(epocs=100, iterations=500, batch_size=128, latent_dim=2, hidden
     plt.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig('GAN/outputs/gan_results.png', dpi=150)
-    print("Saved plot to GAN/outputs/gan_results.png")
+    plt.savefig('%s/gan_results.png' % gan_outputs, dpi=150)
+    print("Saved plot to %s/gan_results.png" % gan_outputs)
     plt.close()
 
-    torch.save(generator.state_dict(), 'GAN/outputs/generator.pth')
-    torch.save(discriminator.state_dict(), 'GAN/outputs/discriminator.pth')
-    print("Saved models to GAN/outputs/")
+    torch.save(generator.state_dict(), '%s/generator.pth' % gan_outputs)
+    torch.save(discriminator.state_dict(), '%s/discriminator.pth' % gan_outputs)
+    print("Saved models to %s/" % gan_outputs)
 
     if create_video:
-        video_path = 'GAN/outputs/training_progress.mp4'
+        video_path = '%s/training_progress.mp4' % gan_outputs
         create_video_from_frames(frames_dir, video_path, fps=video_fps)
 
     return history, generator, discriminator, mog

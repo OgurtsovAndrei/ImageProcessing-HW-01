@@ -43,6 +43,8 @@ kaggle = "*"
 memray = "*"
 diffusers = "*"
 peft = "*"
+sentencepiece = "*"
+qwen-vl-utils = "*"
 
 [dev-packages]
 
