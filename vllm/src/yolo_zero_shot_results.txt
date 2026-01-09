@@ -1,0 +1,1 @@
+Zero-shot YOLO mAP@0.5: 0.0438
