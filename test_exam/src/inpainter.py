@@ -10,8 +10,8 @@ import cv2
 
 from test_exam.src.template_inpainter import (
     TemplateInpainter,
-    FullTemplateInpainter,
 )
+from test_exam.src.full_template_inpainter import FullTemplateInpainter
 
 
 class DiffusionInpainter:

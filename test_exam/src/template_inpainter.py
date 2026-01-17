@@ -476,7 +476,7 @@ def unletterbox_from_square_full(
     """
     Removes letterboxing from a square image for full-image inpainting.
     Handles the case where we're restoring the entire image, not just a crop.
-    
+
     Args:
         square_output: The square image (with padding) to unletterbox
         original_w: Original full image width
@@ -486,27 +486,59 @@ def unletterbox_from_square_full(
         pad_top: Top padding amount
         new_w: Scaled width (before padding)
         new_h: Scaled height (before padding)
-    
+
     Returns:
         Image restored to original full dimensions
     """
+    # Get the actual size of the square output
+    sq_w, sq_h = square_output.size
+    print(f"Debug [unletterbox_full]: square_output size = {sq_w}x{sq_h}")
+    print(f"Debug [unletterbox_full]: original pad_left={pad_left}, pad_top={pad_top}, new_w={new_w}, new_h={new_h}")
+
+    # Calculate the expected input square size based on letterbox parameters
+    # Letterbox adds padding to make the image square
+    input_square_size = max(new_w + pad_left * 2, new_h + pad_top * 2)
+    if input_square_size == 0:
+        input_square_size = max(new_w, new_h)
+
+    print(f"Debug [unletterbox_full]: calculated input_square_size = {input_square_size}")
+
+    # If the output size doesn't match the expected input size, scale the padding parameters
+    if sq_w != input_square_size:
+        scale_factor = sq_w / input_square_size
+        print(f"Debug [unletterbox_full]: scaling by factor = {scale_factor}")
+
+        # Scale all parameters proportionally
+        pad_left = int(pad_left * scale_factor)
+        pad_top = int(pad_top * scale_factor)
+        new_w = int(new_w * scale_factor)
+        new_h = int(new_h * scale_factor)
+
+        print(f"Debug [unletterbox_full]: scaled pad_left={pad_left}, pad_top={pad_top}, new_w={new_w}, new_h={new_h}")
+
+    # Ensure crop box is within bounds
+    crop_right = min(pad_left + new_w, sq_w)
+    crop_bottom = min(pad_top + new_h, sq_h)
+
+    print(f"Debug [unletterbox_full]: crop_box = ({pad_left}, {pad_top}, {crop_right}, {crop_bottom})")
+
     # First, crop out the padding to get back to the scaled size
     crop_box: Tuple[int, int, int, int] = (
         pad_left,
         pad_top,
-        pad_left + new_w,
-        pad_top + new_h,
+        crop_right,
+        crop_bottom,
     )
     unpadded: Image.Image = square_output.crop(crop_box)
-    
-    # Verify we got the expected size
-    if unpadded.size != (new_w, new_h):
-        print(f"Warning [Full]: Expected unpadded size ({new_w}, {new_h}), got {unpadded.size}")
-    
+
+    print(f"Debug [unletterbox_full]: unpadded size = {unpadded.size}")
+
     # Resize back to the original full image dimensions
     restored: Image.Image = unpadded.resize(
         (original_w, original_h),
         Image.Resampling.LANCZOS,
     )
-    
+
+    print(f"Debug [unletterbox_full]: restored size = {restored.size}, expected ({original_w}, {original_h})")
+
     return restored
