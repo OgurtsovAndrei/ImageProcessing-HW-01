@@ -12,6 +12,7 @@ class PlannerType(Enum):
 DATA_DIR: str = "test_exam/data"
 RESULT_DIR_STEP1: str = "test_exam/result1"
 RESULT_DIR_STEP2: str = "test_exam/result2"
+RESULT_DIR_FINAL: str = "test_exam/result_final"
 VALID_EXTENSIONS: Tuple[str, ...] = (".jpg", ".jpeg", ".png")
 DEVICE: str = "mps" if torch.backends.mps.is_available() else "cpu"
 
@@ -26,6 +27,19 @@ VLM_MODEL_ID: str = "Qwen/Qwen2-VL-7B-Instruct"
 GEMINI_MODEL_ID: str = "gemini-3-flash-preview"
 PLANNER_TYPE: PlannerType = PlannerType.GEMINI_INSTANT
 CROP_CONTEXT_MULTIPLIER: float = 2.5
+
+# Inpainting Hyperparameters
+INPAINT_MODEL_ID: str = "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
+INPAINT_PROMPT: str = (
+    "A realistic bowl of cat food placed on the ground, "
+    "matching the lighting, perspective, and style of the scene"
+)
+INPAINT_NEGATIVE_PROMPT: str = (
+    "bad quality, blurry, distorted, low resolution, deformed"
+)
+INPAINT_NUM_STEPS: int = 30
+INPAINT_GUIDANCE_SCALE: float = 7.5
+INPAINT_CROP_PADDING: int = 64
 
 # Visualization Hyperparameters
 CAT_BOX_COLOR: Tuple[int, int, int] = (0, 255, 0)

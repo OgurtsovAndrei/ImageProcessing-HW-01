@@ -4,17 +4,20 @@ from test_exam.src.detector import CatDetector
 from test_exam.src.planner import BowlPlanner
 from test_exam.src.gemini_planner import GeminiBowlPlanner
 from test_exam.src.gemini_instant_planner import GeminiInstantPlanner
+from test_exam.src.inpainter import BowlInpainter
 import test_exam.config as config
 from test_exam.config import PlannerType
 from test_exam.src.utils import save_visualized_detections
+from PIL import Image
 
 
 def main() -> None:
     data_dir: str = config.DATA_DIR
     res1_dir: str = config.RESULT_DIR_STEP1
     res2_dir: str = config.RESULT_DIR_STEP2
+    res_final_dir: str = config.RESULT_DIR_FINAL
 
-    for d in [res1_dir, res2_dir]:
+    for d in [res1_dir, res2_dir, res_final_dir]:
         if not os.path.exists(d):
             os.makedirs(d)
 
@@ -28,6 +31,7 @@ def main() -> None:
         planner_class = BowlPlanner
 
     planner: BowlPlanner = planner_class()
+    inpainter: BowlInpainter = BowlInpainter()
 
     valid_exts: tuple[str, ...] = config.VALID_EXTENSIONS
     image_files: List[str] = [
@@ -49,6 +53,13 @@ def main() -> None:
         save_visualized_detections(
             image_path, cat_boxes, res2_path, bowl_boxes
         )
+
+        final_image: Image.Image = inpainter.inpaint_bowls(
+            image_path, bowl_boxes
+        )
+        res_final_path: str = os.path.join(res_final_dir, image_name)
+        final_image.save(res_final_path)
+        print(f"Saved final result to {res_final_path}")
 
 
 if __name__ == "__main__":
