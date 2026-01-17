@@ -1,48 +1,24 @@
 import os
-import cv2
-from typing import List, Dict, Any, Optional
+from typing import List, Dict
 from test_exam.src.detector import CatDetector
+from test_exam.src.planner import BowlPlanner
 import test_exam.config as config
-
-
-def save_visualized_detections(
-    image_path: str,
-    boxes: List[Dict[str, float]],
-    result_path: str
-) -> None:
-    image: Optional[Any] = cv2.imread(image_path)
-
-    if image is None:
-        print(f"Failed to load {image_path}")
-        return
-
-    for box in boxes:
-        x: int = int(box["x"])
-        y: int = int(box["y"])
-        w: int = int(box["w"])
-        h: int = int(box["h"])
-
-        cv2.rectangle(
-            image, (x, y), (x + w, y + h),
-            config.BOX_COLOR, config.BOX_THICKNESS
-        )
-
-    cv2.imwrite(result_path, image)
-    print(f"Saved result to {result_path}")
+from test_exam.src.utils import save_visualized_detections
 
 
 def main() -> None:
     data_dir: str = config.DATA_DIR
-    result_dir: str = config.RESULT_DIR
+    res1_dir: str = config.RESULT_DIR_STEP1
+    res2_dir: str = config.RESULT_DIR_STEP2
 
-    if not os.path.exists(result_dir):
-        os.makedirs(result_dir)
+    for d in [res1_dir, res2_dir]:
+        if not os.path.exists(d):
+            os.makedirs(d)
 
     detector: CatDetector = CatDetector()
+    planner: BowlPlanner = BowlPlanner()
 
-    # Supported image extensions
     valid_exts: tuple[str, ...] = config.VALID_EXTENSIONS
-
     image_files: List[str] = [
         f for f in os.listdir(data_dir) if f.lower().endswith(valid_exts)
     ]
@@ -51,10 +27,17 @@ def main() -> None:
         image_path: str = os.path.join(data_dir, image_name)
         print(f"Processing {image_path}...")
 
-        boxes: List[Dict[str, float]] = detector.detect(image_path)
+        cat_boxes: List[Dict[str, float]] = detector.detect(image_path)
+        res1_path: str = os.path.join(res1_dir, image_name)
+        save_visualized_detections(image_path, cat_boxes, res1_path)
 
-        result_path: str = os.path.join(result_dir, image_name)
-        save_visualized_detections(image_path, boxes, result_path)
+        bowl_boxes: List[Dict[str, float]] = planner.plan_bowls(
+            image_path, cat_boxes
+        )
+        res2_path: str = os.path.join(res2_dir, image_name)
+        save_visualized_detections(
+            image_path, cat_boxes, res2_path, bowl_boxes
+        )
 
 
 if __name__ == "__main__":

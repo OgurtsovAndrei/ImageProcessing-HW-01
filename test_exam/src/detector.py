@@ -13,7 +13,8 @@ class CatDetector:
         self,
         image_path: str,
         conf: float = config.DETECTION_CONF,
-        imgsz: int = config.DETECTION_IMGSZ
+        imgsz: int = config.DETECTION_IMGSZ,
+        device: str = config.DEVICE
     ) -> List[Dict[str, float]]:
         """
         Detects cats in the image and returns a list of bounding boxes.
@@ -25,6 +26,7 @@ class CatDetector:
             classes=[self.cat_class_id],
             conf=conf,
             imgsz=imgsz,
+            device=device,
             verbose=False
         )
         boxes: List[Dict[str, float]] = []

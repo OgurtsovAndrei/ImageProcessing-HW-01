@@ -1898,4 +1898,5 @@ vllm/src/yolov8n.pt
 /test_exam/docs/
 /test_exam/yolov8n.pt
 test_exam/result1/
+test_exam/result2/
 *.pt
