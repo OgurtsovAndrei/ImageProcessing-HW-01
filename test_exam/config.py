@@ -12,6 +12,7 @@ class PlannerType(Enum):
 class InpainterType(Enum):
     DIFFUSION = "diffusion"
     TEMPLATE = "template"
+    FULL_TEMPLATE = "full_template"
 
 
 DATA_DIR: str = "test_exam/data"

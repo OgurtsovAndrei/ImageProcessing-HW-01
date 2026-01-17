@@ -8,7 +8,10 @@ import test_exam.config as config
 import numpy as np
 import cv2
 
-from test_exam.src.template_inpainter import TemplateInpainter
+from test_exam.src.template_inpainter import (
+    TemplateInpainter,
+    FullTemplateInpainter,
+)
 
 
 class DiffusionInpainter:
@@ -99,8 +102,12 @@ class DiffusionInpainter:
         rel_bx2: float = (bx + bw - x1) * scale_x
         rel_by2: float = (by + bh - y1) * scale_y
 
-        margin_x: float = (rel_bx2 - rel_bx1) * config.INPAINT_MASK_MARGIN_RATIO
-        margin_y: float = (rel_by2 - rel_by1) * config.INPAINT_MASK_MARGIN_RATIO
+        margin_x: float = (
+            (rel_bx2 - rel_bx1) * config.INPAINT_MASK_MARGIN_RATIO
+        )
+        margin_y: float = (
+            (rel_by2 - rel_by1) * config.INPAINT_MASK_MARGIN_RATIO
+        )
 
         rel_bx1_m: float = max(0.0, rel_bx1 - margin_x)
         rel_by1_m: float = max(0.0, rel_by1 - margin_y)
@@ -119,23 +126,40 @@ class DiffusionInpainter:
         mask_np = cv2.GaussianBlur(mask_np, (blur_k, blur_k), 0)
         mask = Image.fromarray(mask_np)
 
-        pipe_kwargs: Dict[str, Any] = {"prompt": config.INPAINT_PROMPT,
-                                       "negative_prompt": config.INPAINT_NEGATIVE_PROMPT, "image": input_img,
-                                       "mask_image": mask, "num_inference_steps": config.INPAINT_NUM_STEPS,
-                                       "guidance_scale": config.INPAINT_GUIDANCE_SCALE,
-                                       "strength": config.INPAINT_STRENGTH}
+        pipe_kwargs: Dict[str, Any] = {
+            "prompt": config.INPAINT_PROMPT,
+            "negative_prompt": config.INPAINT_NEGATIVE_PROMPT,
+            "image": input_img,
+            "mask_image": mask,
+            "num_inference_steps": config.INPAINT_NUM_STEPS,
+            "guidance_scale": config.INPAINT_GUIDANCE_SCALE,
+            "strength": config.INPAINT_STRENGTH,
+        }
 
-        # sig: inspect.Signature = inspect.signature(self.pipe.__call__)  # type: ignore
+        # sig: inspect.Signature = (
+        #     inspect.signature(self.pipe.__call__)  # type: ignore
+        # )
         # if "strength" in sig.parameters:
 
-        inpainted_crop: Image.Image = self.pipe(**pipe_kwargs).images[0]  # type: ignore
+        inpainted_crop: Image.Image = (
+            self.pipe(**pipe_kwargs).images[0]  # type: ignore
+        )
 
-        if config.DEBUG_ENABLED and bowl_idx < config.DEBUG_MAX_ARTIFACTS_PER_IMAGE:
+        if (
+            config.DEBUG_ENABLED and
+            bowl_idx < config.DEBUG_MAX_ARTIFACTS_PER_IMAGE
+        ):
             os.makedirs(config.DEBUG_DIR, exist_ok=True)
             prefix: str = f"{image_name}_bowl_{bowl_idx}"
-            crop_img.save(os.path.join(config.DEBUG_DIR, f"{prefix}_0_crop.png"))
-            input_img.save(os.path.join(config.DEBUG_DIR, f"{prefix}_1_input.png"))
-            mask.save(os.path.join(config.DEBUG_DIR, f"{prefix}_2_mask.png"))
+            crop_img.save(
+                os.path.join(config.DEBUG_DIR, f"{prefix}_0_crop.png")
+            )
+            input_img.save(
+                os.path.join(config.DEBUG_DIR, f"{prefix}_1_input.png")
+            )
+            mask.save(
+                os.path.join(config.DEBUG_DIR, f"{prefix}_2_mask.png")
+            )
             inpainted_crop.save(
                 os.path.join(config.DEBUG_DIR, f"{prefix}_3_inpainted.png")
             )
@@ -156,6 +180,8 @@ def create_inpainter() -> Any:
     """Factory function to create the appropriate inpainter based on config"""
     if config.INPAINTER_TYPE == config.InpainterType.TEMPLATE:
         return TemplateInpainter()
+    elif config.INPAINTER_TYPE == config.InpainterType.FULL_TEMPLATE:
+        return FullTemplateInpainter()
     else:
         return DiffusionInpainter()
 
