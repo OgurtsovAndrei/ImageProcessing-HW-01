@@ -1,8 +1,11 @@
 import os
-from typing import List, Dict
+from typing import List, Dict, Type
 from test_exam.src.detector import CatDetector
 from test_exam.src.planner import BowlPlanner
+from test_exam.src.gemini_planner import GeminiBowlPlanner
+from test_exam.src.gemini_instant_planner import GeminiInstantPlanner
 import test_exam.config as config
+from test_exam.config import PlannerType
 from test_exam.src.utils import save_visualized_detections
 
 
@@ -16,7 +19,15 @@ def main() -> None:
             os.makedirs(d)
 
     detector: CatDetector = CatDetector()
-    planner: BowlPlanner = BowlPlanner()
+
+    if config.PLANNER_TYPE == PlannerType.GEMINI_LOCAL:
+        planner_class: Type[BowlPlanner] = GeminiBowlPlanner
+    elif config.PLANNER_TYPE == PlannerType.GEMINI_INSTANT:
+        planner_class = GeminiInstantPlanner
+    else:
+        planner_class = BowlPlanner
+
+    planner: BowlPlanner = planner_class()
 
     valid_exts: tuple[str, ...] = config.VALID_EXTENSIONS
     image_files: List[str] = [

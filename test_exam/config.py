@@ -1,5 +1,13 @@
 from typing import Tuple
 import torch
+from enum import Enum
+
+
+class PlannerType(Enum):
+    QWEN = "qwen"
+    GEMINI_LOCAL = "gemini_local"
+    GEMINI_INSTANT = "gemini_instant"
+
 
 DATA_DIR: str = "test_exam/data"
 RESULT_DIR_STEP1: str = "test_exam/result1"
@@ -10,12 +18,14 @@ DEVICE: str = "mps" if torch.backends.mps.is_available() else "cpu"
 # Detection Hyperparameters
 MODEL_PATH: str = "yolov8x.pt"
 CAT_CLASS_ID: int = 15
-DETECTION_CONF: float = 0.1
+DETECTION_CONF: float = 0.9
 DETECTION_IMGSZ: int = 1280
 
 # VLM Hyperparameters
-VLM_MODEL_ID: str = "Qwen/Qwen2-VL-2B-Instruct"
-CROP_CONTEXT_MULTIPLIER: float = 1.5
+VLM_MODEL_ID: str = "Qwen/Qwen2-VL-7B-Instruct"
+GEMINI_MODEL_ID: str = "gemini-3-flash-preview"
+PLANNER_TYPE: PlannerType = PlannerType.GEMINI_INSTANT
+CROP_CONTEXT_MULTIPLIER: float = 2.5
 
 # Visualization Hyperparameters
 CAT_BOX_COLOR: Tuple[int, int, int] = (0, 255, 0)

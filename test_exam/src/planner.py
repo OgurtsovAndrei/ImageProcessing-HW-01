@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from PIL import Image, ImageDraw
 from typing import List, Dict, Any, Tuple, Optional
+from tqdm import tqdm
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from qwen_vl_utils import process_vision_info
 import test_exam.config as config
@@ -32,7 +33,7 @@ class BowlPlanner:
         image: Image.Image = Image.open(image_path).convert("RGB")
         bowl_candidates: List[Tuple[Dict[str, float], Dict[str, float]]] = []
 
-        for cat_box in cat_boxes:
+        for cat_box in tqdm(cat_boxes, desc="Planning bowls for cats"):
             bowl: Optional[Dict[str, float]] = self._infer_bowl_for_cat(
                 image=image,
                 cat_box=cat_box
