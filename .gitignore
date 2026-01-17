@@ -1895,3 +1895,7 @@ vllm/src/vlm_training/
 vllm/src/runs/
 vllm/src/yolov8n.pt
 /vllm/src/vlm_training/
+/test_exam/docs/
+/test_exam/yolov8n.pt
+test_exam/result1/
+*.pt
