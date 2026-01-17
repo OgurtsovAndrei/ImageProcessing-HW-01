@@ -46,6 +46,7 @@ peft = "*"
 sentencepiece = "*"
 qwen-vl-utils = "*"
 google-generativeai = "*"
+flake8 = "*"
 
 [dev-packages]
 
