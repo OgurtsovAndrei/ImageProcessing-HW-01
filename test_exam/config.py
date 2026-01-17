@@ -68,6 +68,23 @@ TEMPLATE_DENOISE_STEPS: int = 20
 TEMPLATE_DENOISE_STRENGTH: float = 0.5
 TEMPLATE_DENOISE_GUIDANCE: float = 7.5
 
+TEMPLATE_INPAINT_STRENGTH: float = 0.45
+TEMPLATE_INPAINT_NUM_STEPS: int = 25
+TEMPLATE_INPAINT_GUIDANCE_SCALE: float = 6.0
+TEMPLATE_INPAINT_PROMPT: str = (
+    "small cat food bowl on the stone ground, realistic shadow, "
+    "match lighting and perspective"
+)
+TEMPLATE_INPAINT_NEGATIVE_PROMPT: str = (
+    "no stylization, no cartoon, no texture-only fill, no artifacts"
+)
+
+TEMPLATE_NOISE_SIGMA: float = 5.0
+TEMPLATE_NOISE_ON_BOWL_ONLY: bool = True
+
+TEMPLATE_MASK_MARGIN_RATIO: float = 0.45
+TEMPLATE_MASK_BLUR_KERNEL: int = 31
+
 # Visualization Hyperparameters
 CAT_BOX_COLOR: Tuple[int, int, int] = (0, 255, 0)
 BOWL_BOX_COLOR: Tuple[int, int, int] = (0, 0, 255)
