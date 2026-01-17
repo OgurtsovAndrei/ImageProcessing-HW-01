@@ -342,6 +342,14 @@ class FullTemplateInpainter(TemplateInpainter):
         full_image.save(temp_path)
         print(f"Saved intermediate image to {temp_path}")
 
+        if config.DEBUG_ENABLED:
+            os.makedirs(config.DEBUG_DIR, exist_ok=True)
+            full_image.save(
+                os.path.join(
+                    config.DEBUG_DIR, f"{image_name}_1_added_bowls.jpg"
+                )
+            )
+
         img_w: int = full_image.size[0]
         img_h: int = full_image.size[1]
         global_mask_np: np.ndarray = np.full(
@@ -352,6 +360,13 @@ class FullTemplateInpainter(TemplateInpainter):
         blurred_image: Image.Image = full_image.filter(
             ImageFilter.GaussianBlur(radius=1.0)
         )
+
+        if config.DEBUG_ENABLED:
+            blurred_image.save(
+                os.path.join(
+                    config.DEBUG_DIR, f"{image_name}_2_noised.jpg"
+                )
+            )
 
         inp_size: int = config.INPAINT_SIZE
         sq_input: Image.Image
@@ -395,6 +410,13 @@ class FullTemplateInpainter(TemplateInpainter):
         )
         final_image.save(final_special_path)
         print(f"Saved final special result to {final_special_path}")
+
+        if config.DEBUG_ENABLED:
+            final_image.save(
+                os.path.join(
+                    config.DEBUG_DIR, f"{image_name}_3_denoised.jpg"
+                )
+            )
 
         return final_image
 
