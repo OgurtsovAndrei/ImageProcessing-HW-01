@@ -19,8 +19,8 @@ VLM_MODEL_ID: str = "Qwen/Qwen2-VL-2B-Instruct"
 # Visualization Hyperparameters
 CAT_BOX_COLOR: Tuple[int, int, int] = (0, 255, 0)
 BOWL_BOX_COLOR: Tuple[int, int, int] = (0, 0, 255)
-BOX_THICKNESS: int = 1
+BOX_THICKNESS: int = 2
 TEXT_FONT_SCALE: float = 0.9
-TEXT_THICKNESS: int = 1
+TEXT_THICKNESS: int = 2
 CAT_LABEL: str = "cat"
 BOWL_LABEL: str = "bowl"
