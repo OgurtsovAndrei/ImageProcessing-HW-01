@@ -15,6 +15,7 @@ DETECTION_IMGSZ: int = 1280
 
 # VLM Hyperparameters
 VLM_MODEL_ID: str = "Qwen/Qwen2-VL-2B-Instruct"
+CROP_CONTEXT_MULTIPLIER: float = 1.5
 
 # Visualization Hyperparameters
 CAT_BOX_COLOR: Tuple[int, int, int] = (0, 255, 0)
