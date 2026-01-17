@@ -101,9 +101,16 @@ class GeminiBowlPlanner(BowlPlanner):
         x_abs: float = x_crop + crop_x1
         y_abs: float = y_crop + crop_y1
 
-        return {
+        bowl: Dict[str, float] = {
             "x": x_abs,
             "y": y_abs,
             "w": w_crop,
             "h": h_crop
         }
+
+        return self._validate_bowl(
+            bowl=bowl,
+            cat_box=cat_box,
+            img_w=image.width,
+            img_h=image.height
+        )

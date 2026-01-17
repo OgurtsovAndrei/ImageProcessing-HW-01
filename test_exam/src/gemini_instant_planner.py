@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw
 from typing import List, Dict, Tuple, Optional, Any
 import google.generativeai as genai
 import test_exam.config as config
-from test_exam.src.planner import BowlPlanner
+from test_exam.src.planner import BowlPlanner, boxes_overlap, box_center
 
 
 class GeminiInstantPlanner(BowlPlanner):
@@ -114,18 +114,16 @@ class GeminiInstantPlanner(BowlPlanner):
 
         bowl_candidates: List[Tuple[Dict[str, float], Dict[str, float]]] = []
         for bowl in bowl_boxes:
-            bowl_cx: float = bowl["x"] + bowl["w"] / 2
-            bowl_cy: float = bowl["y"] + bowl["h"] / 2
+            bowl_cx, bowl_cy = box_center(bowl)
 
             min_dist: float = float('inf')
             best_cat: Optional[Dict[str, float]] = None
 
             for cat in cat_boxes:
-                cat_cx: float = cat["x"] + cat["w"] / 2
-                cat_cy: float = cat["y"] + cat["h"] / 2
+                cat_cx, cat_cy = box_center(cat)
                 dist: float = (
-                                      (bowl_cx - cat_cx) ** 2 + (bowl_cy - cat_cy) ** 2
-                              ) ** 0.5
+                    (bowl_cx - cat_cx) ** 2 + (bowl_cy - cat_cy) ** 2
+                ) ** 0.5
                 if dist < min_dist:
                     min_dist = dist
                     best_cat = cat
@@ -133,7 +131,19 @@ class GeminiInstantPlanner(BowlPlanner):
             if best_cat:
                 bowl_candidates.append((bowl, best_cat))
 
-        final_bowls: List[Dict[str, float]] = self._remove_overlapping_bowls(
+        refined_bowls: List[Dict[str, float]] = self._remove_overlapping_bowls(
             bowl_candidates
         )
+
+        # Global filtering: bowl must NOT overlap ANY cat
+        final_bowls: List[Dict[str, float]] = []
+        for bowl in refined_bowls:
+            overlaps_any_cat: bool = False
+            for cat_box in cat_boxes:
+                if boxes_overlap(bowl, cat_box):
+                    overlaps_any_cat = True
+                    break
+            if not overlaps_any_cat:
+                final_bowls.append(bowl)
+
         return final_bowls

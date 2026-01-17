@@ -9,6 +9,49 @@ from qwen_vl_utils import process_vision_info
 import test_exam.config as config
 
 
+def clamp_box_to_bounds(
+        box: Dict[str, float],
+        img_w: int,
+        img_h: int
+) -> Dict[str, float]:
+    x1: float = max(0, box["x"])
+    y1: float = max(0, box["y"])
+    x2: float = min(img_w, box["x"] + box["w"])
+    y2: float = min(img_h, box["y"] + box["h"])
+    return {
+        "x": x1,
+        "y": y1,
+        "w": max(0, x2 - x1),
+        "h": max(0, y2 - y1)
+    }
+
+
+def boxes_overlap(
+        box1: Dict[str, float],
+        box2: Dict[str, float]
+) -> bool:
+    x1_min: float = box1["x"]
+    y1_min: float = box1["y"]
+    x1_max: float = box1["x"] + box1["w"]
+    y1_max: float = box1["y"] + box1["h"]
+
+    x2_min: float = box2["x"]
+    y2_min: float = box2["y"]
+    x2_max: float = box2["x"] + box2["w"]
+    y2_max: float = box2["y"] + box2["h"]
+
+    if x1_max <= x2_min or x2_max <= x1_min:
+        return False
+    if y1_max <= y2_min or y2_max <= y1_min:
+        return False
+
+    return True
+
+
+def box_center(box: Dict[str, float]) -> Tuple[float, float]:
+    return box["x"] + box["w"] / 2, box["y"] + box["h"] / 2
+
+
 class BowlPlanner:
     def __init__(
             self,
@@ -45,7 +88,19 @@ class BowlPlanner:
             bowl_candidates
         )
 
-        return bowl_boxes
+        # Global filtering: Ensure no bowl overlaps with ANY cat in the scene.
+        # VLM might not see other cats when working with a local crop.
+        final_bowls: List[Dict[str, float]] = []
+        for bowl in bowl_boxes:
+            overlaps_any_cat: bool = False
+            for cat_box in cat_boxes:
+                if boxes_overlap(bowl, cat_box):
+                    overlaps_any_cat = True
+                    break
+            if not overlaps_any_cat:
+                final_bowls.append(bowl)
+
+        return final_bowls
 
     def _extract_crop(
             self,
@@ -56,7 +111,7 @@ class BowlPlanner:
         img_height: int = image.height
 
         cat_cx: float = cat_box["x"] + cat_box["w"] / 2
-        cat_cy: float = cat_box["y"] + cat_box["h"] / 2
+        cat_cy: float = cat_box["y"] + cat_box["h"] * config.CROP_Y_SHIFT_RATIO
 
         crop_w: float = cat_box["w"] * config.CROP_CONTEXT_MULTIPLIER
         crop_h: float = cat_box["h"] * config.CROP_CONTEXT_MULTIPLIER
@@ -96,6 +151,38 @@ class BowlPlanner:
         )
 
         return crop_copy
+
+    def _validate_bowl(
+            self,
+            bowl: Dict[str, float],
+            cat_box: Dict[str, float],
+            img_w: int,
+            img_h: int
+    ) -> Optional[Dict[str, float]]:
+        # Ensure the bowl is within the actual image dimensions
+        bowl = clamp_box_to_bounds(bowl, img_w, img_h)
+
+        # Filter out bowls that are too small to be realistic or usable by inpainter
+        if bowl["w"] < config.MIN_BOWL_W or bowl["h"] < config.MIN_BOWL_H:
+            return None
+
+        # Prevent the bowl from being placed on top of the cat it belongs to
+        if boxes_overlap(bowl, cat_box):
+            return None
+
+        # Bowls should be on the ground, so their center must be lower than the cat's center
+        _, bowl_cy = box_center(bowl)
+        _, cat_cy = box_center(cat_box)
+        if bowl_cy < cat_cy:
+            return None
+
+        # Prevent unrealistically large bowls that might be hallucinated by the VLM
+        bowl_area: float = bowl["w"] * bowl["h"]
+        cat_area: float = cat_box["w"] * cat_box["h"]
+        if bowl_area > cat_area * 1.5:
+            return None
+
+        return bowl
 
     def _infer_bowl_for_cat(
             self,
@@ -203,12 +290,19 @@ class BowlPlanner:
         x_abs: float = x_crop + crop_x1
         y_abs: float = y_crop + crop_y1
 
-        return {
+        bowl: Dict[str, float] = {
             "x": x_abs,
             "y": y_abs,
             "w": w_crop,
             "h": h_crop
         }
+
+        return self._validate_bowl(
+            bowl=bowl,
+            cat_box=cat_box,
+            img_w=image.width,
+            img_h=image.height
+        )
 
     def _remove_overlapping_bowls(
             self,
@@ -217,66 +311,25 @@ class BowlPlanner:
         if len(bowl_candidates) == 0:
             return []
 
-        kept_indices: List[int] = list(range(len(bowl_candidates)))
+        # score = negative distance from bowl center to its cat center (closer is better)
+        scored_candidates: List[Tuple[float, Dict[str, float]]] = []
+        for bowl, cat in bowl_candidates:
+            bcx, bcy = box_center(bowl)
+            ccx, ccy = box_center(cat)
+            dist: float = ((bcx - ccx)**2 + (bcy - ccy)**2)**0.5
+            scored_candidates.append((-dist, bowl))
 
-        for i in range(len(bowl_candidates)):
-            if i not in kept_indices:
-                continue
+        # sort by score descending (closest first)
+        scored_candidates.sort(key=lambda x: x[0], reverse=True)
 
-            bowl_i: Dict[str, float] = bowl_candidates[i][0]
-            cat_i: Dict[str, float] = bowl_candidates[i][1]
-            cat_i_cx: float = cat_i["x"] + cat_i["w"] / 2
-            cat_i_cy: float = cat_i["y"] + cat_i["h"] / 2
+        final_bowls: List[Dict[str, float]] = []
+        for _, bowl in scored_candidates:
+            is_overlapping: bool = False
+            for kept_bowl in final_bowls:
+                if boxes_overlap(bowl, kept_bowl):
+                    is_overlapping = True
+                    break
+            if not is_overlapping:
+                final_bowls.append(bowl)
 
-            for j in range(i + 1, len(bowl_candidates)):
-                if j not in kept_indices:
-                    continue
-
-                bowl_j: Dict[str, float] = bowl_candidates[j][0]
-
-                if self._boxes_overlap(bowl_i, bowl_j):
-                    cat_j: Dict[str, float] = bowl_candidates[j][1]
-                    cat_j_cx: float = cat_j["x"] + cat_j["w"] / 2
-                    cat_j_cy: float = cat_j["y"] + cat_j["h"] / 2
-
-                    bowl_i_cx: float = bowl_i["x"] + bowl_i["w"] / 2
-                    bowl_i_cy: float = bowl_i["y"] + bowl_i["h"] / 2
-                    bowl_j_cx: float = bowl_j["x"] + bowl_j["w"] / 2
-                    bowl_j_cy: float = bowl_j["y"] + bowl_j["h"] / 2
-
-                    dist_i: float = np.sqrt(
-                        (bowl_i_cx - cat_i_cx)**2 + (bowl_i_cy - cat_i_cy)**2
-                    )
-                    dist_j: float = np.sqrt(
-                        (bowl_j_cx - cat_j_cx)**2 + (bowl_j_cy - cat_j_cy)**2
-                    )
-
-                    if dist_i <= dist_j:
-                        kept_indices.remove(j)
-                    else:
-                        kept_indices.remove(i)
-                        break
-
-        return [bowl_candidates[i][0] for i in kept_indices]
-
-    @staticmethod
-    def _boxes_overlap(
-            box1: Dict[str, float],
-            box2: Dict[str, float]
-    ) -> bool:
-        x1_min: float = box1["x"]
-        y1_min: float = box1["y"]
-        x1_max: float = box1["x"] + box1["w"]
-        y1_max: float = box1["y"] + box1["h"]
-
-        x2_min: float = box2["x"]
-        y2_min: float = box2["y"]
-        x2_max: float = box2["x"] + box2["w"]
-        y2_max: float = box2["y"] + box2["h"]
-
-        if x1_max <= x2_min or x2_max <= x1_min:
-            return False
-        if y1_max <= y2_min or y2_max <= y1_min:
-            return False
-
-        return True
+        return final_bowls
