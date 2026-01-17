@@ -1,6 +1,6 @@
 import re
 import torch
-from PIL import Image
+from PIL import Image, ImageDraw
 from typing import List, Dict, Any, Tuple
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from qwen_vl_utils import process_vision_info
@@ -29,6 +29,10 @@ class BowlPlanner:
             cat_boxes: List[Dict[str, float]]
     ) -> List[Dict[str, float]]:
         image: Image.Image = Image.open(image_path).convert("RGB")
+        image_with_boxes: Image.Image = self._render_cat_boxes(
+            image=image,
+            cat_boxes=cat_boxes,
+        )
         width: int = image.width
         height: int = image.height
 
@@ -42,6 +46,9 @@ class BowlPlanner:
 
         prompt: str = (
             f"Cats are located at the following bounding boxes:\n{cat_info}\n\n"
+
+            "You will see two images. The first is the original image. "
+            "The second is the same image with cat bounding boxes drawn on it.\n\n"
 
             "Your task is to propose bounding boxes for food bowls for the cats.\n\n"
 
@@ -67,6 +74,7 @@ class BowlPlanner:
                 "role": "user",
                 "content": [
                     {"type": "image", "image": image_path},
+                    {"type": "image", "image": image_with_boxes},
                     {"type": "text", "text": prompt},
                 ],
             }
@@ -119,3 +127,26 @@ class BowlPlanner:
             })
 
         return bowl_boxes
+
+    @staticmethod
+    def _render_cat_boxes(
+            image: Image.Image,
+            cat_boxes: List[Dict[str, float]],
+    ) -> Image.Image:
+        image_copy: Image.Image = image.copy()
+        drawer: ImageDraw.ImageDraw = ImageDraw.Draw(image_copy)
+        color: Tuple[int, int, int] = config.CAT_BOX_COLOR
+        thickness: int = config.BOX_THICKNESS
+
+        for box in cat_boxes:
+            x1: int = int(box["x"])
+            y1: int = int(box["y"])
+            x2: int = int(box["x"] + box["w"])
+            y2: int = int(box["y"] + box["h"])
+            drawer.rectangle(
+                [(x1, y1), (x2, y2)],
+                outline=color,
+                width=thickness,
+            )
+
+        return image_copy

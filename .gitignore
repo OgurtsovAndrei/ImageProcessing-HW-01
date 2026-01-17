@@ -1900,3 +1900,27 @@ vllm/src/yolov8n.pt
 test_exam/result1/
 test_exam/result2/
 *.pt
+
+.DS_Store
+.output.txt
+.junie/
+
+GAN/outputs/
+GAN/outputs5/
+
+Surface Detection/123/
+Surface Detection/data/
+Surface Detection/*.bin
+Surface Detection/*.csv
+Surface Detection/*.zip
+
+covid-segmantation/tutorials/
+
+lora/generated_images/
+lora/generated_images2/
+lora/generated_logos_flux/
+lora/output/
+lora/output1/
+
+vllm/data/
+vllm_training/

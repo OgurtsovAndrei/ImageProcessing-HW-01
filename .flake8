@@ -1,0 +1,12 @@
+[flake8]
+max-line-length = 79
+filename =
+    test_exam/*.py,
+    test_exam/**/*.py
+exclude =
+    .git,
+    __pycache__,
+    .mypy_cache,
+    .pytest_cache,
+    .venv,
+    venv,

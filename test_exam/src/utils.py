@@ -26,7 +26,11 @@ def save_visualized_detections(
     print(f"Saved result to {result_path}")
 
 
-def add_boxes_to_img(boxes: list[dict[str, float]], image: Any | None, color: Tuple[int, int, int]):
+def add_boxes_to_img(
+        boxes: list[dict[str, float]],
+        image: Any,
+        color: Tuple[int, int, int]
+) -> None:
     for box in boxes:
         x: int = int(box["x"])
         y: int = int(box["y"])
