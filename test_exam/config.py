@@ -32,7 +32,7 @@ DETECTION_IMGSZ: int = 1280
 VLM_MODEL_ID: str = "Qwen/Qwen2-VL-7B-Instruct"
 GEMINI_MODEL_ID: str = "gemini-3-flash-preview"
 PLANNER_TYPE: PlannerType = PlannerType.GEMINI_INSTANT
-INPAINTER_TYPE: InpainterType = InpainterType.TEMPLATE
+INPAINTER_TYPE: InpainterType = InpainterType.FULL_TEMPLATE
 CROP_CONTEXT_MULTIPLIER: float = 2.5
 CROP_Y_SHIFT_RATIO: float = 0.8
 MIN_BOWL_W: float = 20.0
@@ -64,6 +64,7 @@ INPAINT_CROP_PADDING: int = 128
 
 # Template Inpainter Hyperparameters
 TEMPLATE_BOWL_DIR: str = "test_exam/bowls"
+BOWL_SCALE_FACTOR: float = 1.2
 TEMPLATE_NOISE_STRENGTH: float = 0.3
 TEMPLATE_DENOISE_STEPS: int = 20
 TEMPLATE_DENOISE_STRENGTH: float = 0.5
