@@ -344,31 +344,13 @@ class FullTemplateInpainter(TemplateInpainter):
 
         img_w: int = full_image.size[0]
         img_h: int = full_image.size[1]
-        global_mask_np: np.ndarray = np.zeros((img_h, img_w), dtype=np.uint8)
-
-        for bowl_box in bowl_boxes:
-            bx: int = int(bowl_box["x"])
-            by: int = int(bowl_box["y"])
-            bw: int = int(bowl_box["w"])
-            bh: int = int(bowl_box["h"])
-            margin_ratio: float = float(config.TEMPLATE_MASK_MARGIN_RATIO)
-            margin_x: int = int(round(float(bw) * margin_ratio))
-            margin_y: int = int(round(float(bh) * margin_ratio))
-
-            x1: int = max(0, bx - margin_x)
-            y1: int = max(0, by - margin_y)
-            x2: int = min(img_w, bx + bw + margin_x)
-            y2: int = min(img_h, by + bh + margin_y)
-            global_mask_np[y1:y2, x1:x2] = 255
-
-        blur_k: int = int(config.TEMPLATE_MASK_BLUR_KERNEL)
-        if blur_k % 2 == 0:
-            blur_k += 1
-        global_mask_np = cv2.GaussianBlur(global_mask_np, (blur_k, blur_k), 0)
+        global_mask_np: np.ndarray = np.full(
+            (img_h, img_w), 255, dtype=np.uint8
+        )
         global_mask: Image.Image = Image.fromarray(global_mask_np)
 
         blurred_image: Image.Image = full_image.filter(
-            ImageFilter.GaussianBlur(radius=2.0)
+            ImageFilter.GaussianBlur(radius=1.0)
         )
 
         inp_size: int = config.INPAINT_SIZE
