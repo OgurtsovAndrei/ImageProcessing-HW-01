@@ -6,8 +6,10 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 from test_exam import config as config
-from test_exam.src.template_inpainter import TemplateInpainter, letterbox_to_square, letterbox_mask_to_square, \
+from test_exam.src.template_inpainter import (
+    TemplateInpainter, letterbox_to_square, letterbox_mask_to_square,
     unletterbox_from_square_full
+)
 
 
 class FullTemplateInpainter(TemplateInpainter):
@@ -24,7 +26,9 @@ class FullTemplateInpainter(TemplateInpainter):
 
         res_dir: str = "test_exam/result_final"
         os.makedirs(res_dir, exist_ok=True)
-        temp_path: str = os.path.join(res_dir, f"intermediate-{image_name}-full-inpaint.jpg")
+        temp_path: str = os.path.join(
+            res_dir, f"intermediate-{image_name}-full-inpaint.jpg"
+        )
         full_image.save(temp_path)
         print(f"Saved intermediate image to {temp_path}")
 
@@ -87,15 +91,18 @@ class FullTemplateInpainter(TemplateInpainter):
             pipe_result = self.pipe(**pipe_kwargs)  # type: ignore
             sq_inpainted = pipe_result.images[0]
 
-            print(f"Debug: sq_inpainted size: {sq_inpainted.size}")
-            print(f"Debug: expected size: ({new_w}, {new_h}) in square of {inp_size}")
-            print(f"Debug: target restoration: {img_w}x{img_h}")
+        print(f"Debug: sq_inpainted size: {sq_inpainted.size}")
+        print(
+            f"Debug: expected size: ({new_w}, {new_h}) "
+            f"in square of {inp_size}"
+        )
+        print(f"Debug: target restoration: {img_w}x{img_h}")
 
-            final_image: Image.Image = unletterbox_from_square_full(
-                sq_inpainted, img_w, img_h, scale, pad_left, pad_top, new_w, new_h
-            )
+        final_image: Image.Image = unletterbox_from_square_full(
+            sq_inpainted, img_w, img_h, scale, pad_left, pad_top, new_w, new_h
+        )
 
-            final_special_path: str = os.path.join(
+        final_special_path: str = os.path.join(
             res_dir, f"final-{image_name}-full-inpaint.jpg"
         )
         final_image.save(final_special_path)
