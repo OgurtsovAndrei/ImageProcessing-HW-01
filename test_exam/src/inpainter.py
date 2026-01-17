@@ -1,17 +1,17 @@
 import torch
 import os
-import inspect
 from PIL import Image, ImageDraw
 from typing import List, Dict, Any
 from diffusers import AutoPipelineForInpainting
-from tqdm import tqdm
 
 import test_exam.config as config
 import numpy as np
 import cv2
 
+from test_exam.src.template_inpainter import TemplateInpainter
 
-class BowlInpainter:
+
+class DiffusionInpainter:
     def __init__(self) -> None:
         self.device: str = config.DEVICE
         self.dtype: torch.dtype = (
@@ -150,3 +150,15 @@ class BowlInpainter:
         full_image.paste(final_crop, (x1, y1), final_mask)
 
         return full_image
+
+
+def create_inpainter() -> Any:
+    """Factory function to create the appropriate inpainter based on config"""
+    if config.INPAINTER_TYPE == config.InpainterType.TEMPLATE:
+        return TemplateInpainter()
+    else:
+        return DiffusionInpainter()
+
+
+# Backwards compatibility
+BowlInpainter = DiffusionInpainter

@@ -9,6 +9,11 @@ class PlannerType(Enum):
     GEMINI_INSTANT = "gemini_instant"
 
 
+class InpainterType(Enum):
+    DIFFUSION = "diffusion"
+    TEMPLATE = "template"
+
+
 DATA_DIR: str = "test_exam/data"
 RESULT_DIR_STEP1: str = "test_exam/result1"
 RESULT_DIR_STEP2: str = "test_exam/result2"
@@ -26,6 +31,7 @@ DETECTION_IMGSZ: int = 1280
 VLM_MODEL_ID: str = "Qwen/Qwen2-VL-7B-Instruct"
 GEMINI_MODEL_ID: str = "gemini-3-flash-preview"
 PLANNER_TYPE: PlannerType = PlannerType.GEMINI_INSTANT
+INPAINTER_TYPE: InpainterType = InpainterType.TEMPLATE
 CROP_CONTEXT_MULTIPLIER: float = 2.5
 CROP_Y_SHIFT_RATIO: float = 0.8
 MIN_BOWL_W: float = 20.0
@@ -54,6 +60,13 @@ INPAINT_NEGATIVE_PROMPT: str = (
 INPAINT_NUM_STEPS: int = 50
 INPAINT_GUIDANCE_SCALE: float = 10.0
 INPAINT_CROP_PADDING: int = 128
+
+# Template Inpainter Hyperparameters
+TEMPLATE_BOWL_DIR: str = "test_exam/bowls"
+TEMPLATE_NOISE_STRENGTH: float = 0.3
+TEMPLATE_DENOISE_STEPS: int = 20
+TEMPLATE_DENOISE_STRENGTH: float = 0.5
+TEMPLATE_DENOISE_GUIDANCE: float = 7.5
 
 # Visualization Hyperparameters
 CAT_BOX_COLOR: Tuple[int, int, int] = (0, 255, 0)

@@ -4,7 +4,7 @@ from test_exam.src.detector import CatDetector
 from test_exam.src.planner import BowlPlanner
 from test_exam.src.gemini_planner import GeminiBowlPlanner
 from test_exam.src.gemini_instant_planner import GeminiInstantPlanner
-from test_exam.src.inpainter import BowlInpainter
+from test_exam.src.inpainter import create_inpainter
 import test_exam.config as config
 from test_exam.config import PlannerType
 from test_exam.src.utils import save_visualized_detections
@@ -31,7 +31,7 @@ def main() -> None:
         planner_class = BowlPlanner
 
     planner: BowlPlanner = planner_class()
-    inpainter: BowlInpainter = BowlInpainter()
+    inpainter = create_inpainter()
 
     valid_exts: tuple[str, ...] = config.VALID_EXTENSIONS
     image_files: List[str] = [
